@@ -1,0 +1,35 @@
+{
+    "name": "sarthi",
+    "short_name": "sarthi",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A cross-platform app that serves as a personal spiritual guide, allowing users to ask life’s questions and receive thoughtful, AI-generated answers rooted in the teachings of the Bhagavad Gita, Quran, or Bible, with scripture-specific context, verse references, and a fully private, login-free experience stored entirely on the user’s device.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
