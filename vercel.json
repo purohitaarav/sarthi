@@ -10,26 +10,28 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "source": "/api/(.*)",
+      "destination": "https://sarthi-backend.onrender.com/api/$1"
     },
     {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
     },
     {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
+      "source": "/manifest.json",
+      "destination": "/manifest.json"
     },
     {
-      "src": "/logo(.*).png",
-      "dest": "/logo$1.png"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/logo(.*).png",
+      "destination": "/logo$1.png"
     }
   ],
   "env": {
@@ -42,7 +44,7 @@
   },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "(.*)",
       "headers": [
         {
           "key": "X-Content-Type-Options",
