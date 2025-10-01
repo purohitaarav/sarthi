@@ -1,0 +1,46 @@
+services:
+  # Backend API Service
+  - type: web
+    name: sarthi-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
+      - key: OLLAMA_API_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: llama3.1:8b
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://sarthi-frontend.vercel.app
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # Optional: Ollama Service (if using Docker)
+  # Note: Ollama requires significant resources, consider external hosting
+  # - type: web
+  #   name: sarthi-ollama
+  #   env: docker
+  #   dockerfilePath: ./Dockerfile.ollama
+  #   plan: standard
+  #   envVars:
+  #     - key: OLLAMA_HOST
+  #       value: 0.0.0.0:11434
+
+databases:
+  # SQLite database (for user data)
+  # Note: Render uses ephemeral storage, consider using Render PostgreSQL or external DB
+  # - name: sarthi-db
+  #   databaseName: sarthi
+  #   user: sarthi_user
