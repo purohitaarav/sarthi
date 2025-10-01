@@ -4,6 +4,7 @@
   "description": "Full-stack web app with React frontend, Node/Express backend, and SQLite database",
   "main": "server/index.js",
   "scripts": {
+    "install": "npm install @libsql/linux-x64-gnu --save-optional && npm install",
     "start": "node server/index.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",

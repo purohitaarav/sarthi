@@ -1,5 +1,5 @@
 # Dockerfile for Backend (Render deployment)
-FROM node:18-alpine
+FROM node:18-bullseye
 
 # Set working directory
 WORKDIR /app
