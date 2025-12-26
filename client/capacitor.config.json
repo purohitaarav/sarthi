@@ -1,0 +1,8 @@
+{
+    "appId": "com.sarthi.app",
+    "appName": "Sarthi",
+    "webDir": "build",
+    "server": {
+        "androidScheme": "https"
+    }
+}

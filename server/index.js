@@ -7,7 +7,7 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // CORS Configuration
 const corsOptions = {
@@ -37,14 +37,14 @@ app.use((req, res, next) => {
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
-const itemRoutes = require('./routes/itemRoutes');
+const reflectionRoutes = require('./routes/reflectionRoutes');
 const spiritualRoutes = require('./routes/spiritualRoutes');
 const gitaRoutes = require('./routes/gitaRoutes');
 const guidanceRoutes = require('./routes/guidanceRoutes');
 
 // API Routes
 app.use('/api/users', userRoutes);
-app.use('/api/items', itemRoutes);
+app.use('/api/reflections', reflectionRoutes);
 app.use('/api/spiritual', spiritualRoutes);
 app.use('/api/gita', gitaRoutes);
 app.use('/api/guidance', guidanceRoutes);

@@ -4,7 +4,7 @@
   "description": "Full-stack web app with React frontend, Node/Express backend, and SQLite database",
   "main": "server/index.js",
   "scripts": {
-    "install": "npm install @libsql/linux-x64-gnu --save-optional && npm install",
+    "install": "npm install @libsql/linux-x64-gnu --save-optional",
     "start": "node server/index.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
@@ -26,18 +26,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "sqlite3": "^5.1.6",
+    "@google/generative-ai": "^0.24.1",
     "@libsql/client": "^0.5.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.3.1",
     "axios": "^1.5.0",
-    "cheerio": "^1.0.0-rc.12"
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  },
+  "optionalDependencies": {
+    "@libsql/linux-x64-gnu": "^0.5.22"
   }
 }

@@ -42,9 +42,9 @@ const SpiritualHome = () => {
       }
     } catch (err) {
       console.error('Error fetching guidance:', err);
-      
+
       if (err.response?.status === 503) {
-        setError('AI service is currently unavailable. Please ensure Ollama is running.');
+        setError('AI service is currently unavailable. Please try again later.');
       } else if (err.response?.status === 404) {
         setError('No relevant verses found for your query. Try different keywords.');
       } else if (err.response?.data?.message) {

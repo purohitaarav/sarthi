@@ -9,6 +9,16 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     console.error('❌ Error connecting to database:', err.message);
   } else {
     console.log('✅ Connected to SQLite database');
+
+    // Attach gita database for cross-database joins
+    const gitaDbPath = path.join(__dirname, '../database/gita.db');
+    db.run(`ATTACH DATABASE '${gitaDbPath}' AS gita`, (err) => {
+      if (err) {
+        console.error('❌ Error attaching gita database:', err.message);
+      } else {
+        console.log('✅ Attached gita database');
+      }
+    });
   }
 });
 

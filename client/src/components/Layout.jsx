@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/guidance', label: 'AI Guidance', icon: Sparkles, highlight: true },
     { path: '/users', label: 'Users', icon: Users },
-    { path: '/items', label: 'Items', icon: Package },
+    { path: '/reflections', label: 'Reflections', icon: Package },
     { path: '/spiritual', label: 'Spiritual', icon: Sparkles },
     { path: '/about', label: 'About', icon: Info },
   ];

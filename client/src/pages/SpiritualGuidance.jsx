@@ -8,13 +8,11 @@ const SpiritualGuidance = () => {
   const [guidance, setGuidance] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [ollamaStatus, setOllamaStatus] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
   const responseRef = useRef(null);
 
-  useEffect(() => {
-    checkOllamaHealth();
-  }, []);
+  // Clean up: removed Ollama status checking
+
 
   useEffect(() => {
     if (responseRef.current) {
@@ -22,19 +20,9 @@ const SpiritualGuidance = () => {
     }
   }, [guidance]);
 
-  const checkOllamaHealth = async () => {
-    try {
-      const response = await api.get('/spiritual/health');
-      setOllamaStatus(response.data);
-    } catch (error) {
-      console.error('Failed to check Ollama health:', error);
-      setOllamaStatus({ status: 'unavailable', ollama_available: false });
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!question.trim()) {
       setError('Please enter a question');
       return;
@@ -45,13 +33,13 @@ const SpiritualGuidance = () => {
     setGuidance('');
 
     try {
-      const response = await api.post('/spiritual/ask', {
+      const response = await api.post('/guidance/ask', {
         question: question.trim(),
         context: context.trim() || undefined,
       });
 
       setGuidance(response.data.guidance);
-      
+
       // Add to conversation history
       setConversationHistory(prev => [...prev, {
         question: question,
@@ -65,8 +53,8 @@ const SpiritualGuidance = () => {
     } catch (error) {
       console.error('Error getting guidance:', error);
       setError(
-        error.response?.data?.message || 
-        'Failed to get spiritual guidance. Please ensure Ollama is running.'
+        error.response?.data?.message ||
+        'Failed to get spiritual guidance.'
       );
     } finally {
       setLoading(false);
@@ -95,31 +83,8 @@ const SpiritualGuidance = () => {
         <p className="text-xl text-gray-600 mb-4">
           Seek wisdom from the timeless teachings of the Bhagavad Gita
         </p>
-        
+
         {/* Ollama Status */}
-        {ollamaStatus && (
-          <div className={`inline-flex items-center px-4 py-2 rounded-lg ${
-            ollamaStatus.ollama_available 
-              ? 'bg-green-50 border border-green-200' 
-              : 'bg-red-50 border border-red-200'
-          }`}>
-            {ollamaStatus.ollama_available ? (
-              <>
-                <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                <span className="text-sm text-green-700">
-                  Ollama Connected ({ollamaStatus.current_model})
-                </span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-4 h-4 text-red-600 mr-2" />
-                <span className="text-sm text-red-700">
-                  Ollama Unavailable - Please start Ollama service
-                </span>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Main Form */}
@@ -158,7 +123,7 @@ const SpiritualGuidance = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || !ollamaStatus?.ollama_available}
+            disabled={loading}
             className="w-full flex items-center justify-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (

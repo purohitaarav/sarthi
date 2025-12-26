@@ -1,6 +1,6 @@
 # Sarthi
 
-A full-stack web application template with React frontend, Node/Express backend, SQLite database, **Turso (libSQL)** for Bhagavad Gita content, and **Ollama AI integration** for spiritual guidance.
+A full-stack web application template with React frontend, Node/Express backend, SQLite database, **Turso (libSQL)** for Bhagavad Gita content, and **Gemini AI integration** for spiritual guidance.
 
 ## Features
 
@@ -8,7 +8,7 @@ A full-stack web application template with React frontend, Node/Express backend,
 - **Express Backend**: RESTful API with Node.js and Express
 - **SQLite Database**: Lightweight and efficient database integration
 - **Turso (libSQL)**: Dedicated database for Bhagavad Gita chapters, verses, translations, and purports
-- **Ollama AI Integration**: Spiritual guidance powered by Llama 3.1 8B with Bhagavad Gita teachings
+- **Gemini AI Integration**: Spiritual guidance powered by Google's Gemini 2.5 models
 - **Authentication Ready**: JWT and bcrypt setup for user authentication
 - **Modern UI**: Beautiful, responsive interface with Tailwind CSS and Lucide icons
 - **Development Tools**: Hot reload with nodemon and concurrently
@@ -27,7 +27,7 @@ A full-stack web application template with React frontend, Node/Express backend,
 - Express.js
 - SQLite3
 - Turso / libSQL
-- Ollama (Llama 3.1 8B)
+- Google Generative AI (Gemini 2.5 Pro & Flash)
 - Axios
 - bcryptjs
 - jsonwebtoken
@@ -80,7 +80,7 @@ sarthi/
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and update the values as needed.
+   Edit `.env` and add your Gemini API Key.
 
 4. **Set up the database**
    ```bash
@@ -103,18 +103,11 @@ sarthi/
    This parses HTML files and populates the database with all 700 verses.
    See `DATA_INGESTION_GUIDE.md` for detailed instructions.
 
-7. **Set up Ollama (for AI spiritual guidance)**
+7. **Embed Verses for Semantic Search**
    ```bash
-   # Install Ollama (macOS)
-   brew install ollama
-   
-   # Start Ollama service
-   ollama serve
-   
-   # Pull Llama 3.1 8B model (in a new terminal)
-   ollama pull llama3.1:8b
+   # Generates embeddings using Gemini's text-embedding-004 model
+   node server/scripts/backfill-embeddings.js
    ```
-   See `OLLAMA_SETUP.md` for detailed instructions.
 
 ### Running the Application
 
@@ -163,10 +156,10 @@ The app will be available at http://localhost:5000
 - `PUT /api/items/:id` - Update item
 - `DELETE /api/items/:id` - Delete item
 
-### Spiritual Guidance (Ollama AI)
+### Spiritual Guidance (Gemini AI)
 - `POST /api/spiritual/ask` - Ask for spiritual guidance
 - `POST /api/spiritual/chat` - Multi-turn conversation
-- `GET /api/spiritual/health` - Check Ollama service status
+- `GET /api/spiritual/health` - Check Gemini service status
 - `GET /api/spiritual/models` - List available models
 
 ### Bhagavad Gita (Turso Database)
@@ -181,7 +174,7 @@ The app will be available at http://localhost:5000
 - `POST /api/gita/chapters` - Create chapter
 - `POST /api/gita/verses` - Create verse
 
-### AI-Powered Guidance (Ollama + Turso)
+### AI-Powered Guidance (Gemini + Turso)
 - `GET /api/guidance/verses?query=keyword` - Search verses by keyword
 - `POST /api/guidance/ask` - Get AI guidance with relevant verses
 - `POST /api/guidance/chat` - Multi-turn conversation with verse context
@@ -189,33 +182,6 @@ The app will be available at http://localhost:5000
 
 ### Health Check
 - `GET /api/health` - Server health status
-
-## Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Items Table
-```sql
-CREATE TABLE items (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  description TEXT,
-  user_id INTEGER,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
 
 ## Environment Variables
 
@@ -227,9 +193,8 @@ NODE_ENV=development
 JWT_SECRET=your_jwt_secret_key_here
 DB_PATH=./server/database/sarthi.db
 
-# Ollama Configuration
-OLLAMA_API_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1:8b
+# Gemini Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Turso (libSQL) Configuration
 TURSO_DATABASE_URL=file:./server/database/gita.db
@@ -237,39 +202,6 @@ TURSO_DATABASE_URL=file:./server/database/gita.db
 # TURSO_AUTH_TOKEN=your_auth_token_here
 ```
 
-## Customization
-
-### Adding New Routes
-
-1. **Backend**: Create a new route file in `server/routes/`
-2. **Frontend**: Add new pages in `client/src/pages/`
-3. Update navigation in `client/src/components/Layout.jsx`
-
-### Adding New Database Tables
-
-1. Update `server/scripts/setupDatabase.js`
-2. Create a new model in `server/models/`
-3. Create corresponding routes in `server/routes/`
-
-## Development Tips
-
-- The frontend proxies API requests to the backend in development
-- Hot reload is enabled for both frontend and backend
-- Database file is created in `server/database/sarthi.db`
-- Keep Ollama running for spiritual guidance features
-- Check browser console and terminal for errors
-
-## Production Deployment
-
-1. Set `NODE_ENV=production` in your environment
-2. Build the frontend: `npm run build`
-3. Start the server: `npm start`
-4. Consider using PM2 or similar for process management
-
 ## License
 
 ISC
-
-## Contributing
-
-Feel free to customize this template for your needs!

@@ -57,6 +57,26 @@ db.serialize(() => {
     }
   });
 
+  // Reflections table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS reflections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      reflection_text TEXT NOT NULL,
+      verse_id INTEGER,
+      chapter_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+    if (err) {
+      console.error('❌ Error creating reflections table:', err.message);
+    } else {
+      console.log('✅ Reflections table created');
+    }
+  });
+
   // Insert sample data
   db.run(`
     INSERT OR IGNORE INTO users (id, username, email, password)

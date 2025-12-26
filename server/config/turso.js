@@ -12,9 +12,21 @@ function initializeTurso() {
     return tursoClient;
   }
 
-  // Use absolute path for local file database
-  const dbPath = process.env.TURSO_DATABASE_URL || 
-                 `file:${path.join(__dirname, '../database/gita.db')}`;
+  // Force local DB in non-production environments for performance
+  let dbPath = process.env.TURSO_DATABASE_URL;
+  if (process.env.NODE_ENV !== 'production') {
+    dbPath = `file:${path.join(__dirname, '../database/gita.db')}`;
+    console.log('⚠️ Development mode: forcing local SQLite for performance');
+  } else {
+    dbPath = dbPath || `file:${path.join(__dirname, '../database/gita.db')}`;
+  }
+
+  console.log('🔌 Turso Config:', {
+    cwd: process.cwd(),
+    dirname: __dirname,
+    dbPath: dbPath,
+    envUrl: process.env.TURSO_DATABASE_URL
+  });
 
   const config = {
     url: dbPath,
@@ -54,6 +66,7 @@ function getTursoClient() {
 async function executeQuery(sql, params = []) {
   const client = getTursoClient();
   try {
+    console.log('Executing sql:', sql.substring(0, 50));
     const result = await client.execute({
       sql,
       args: params,

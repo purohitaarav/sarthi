@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ollamaService = require('../services/ollamaService');
+const geminiService = require('../services/geminiService');
 
 // System prompt for spiritual guidance based on Bhagavad Gita
 const BHAGAVAD_GITA_SYSTEM_PROMPT = `You are a wise spiritual guide and teacher deeply versed in the teachings of the Bhagavad Gita. Your purpose is to provide thoughtful, compassionate guidance based on the timeless wisdom of this sacred text.
@@ -30,18 +30,18 @@ router.post('/ask', async (req, res) => {
     const { question, context } = req.body;
 
     if (!question || question.trim().length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Question is required',
         message: 'Please provide a question for spiritual guidance'
       });
     }
 
-    // Check if Ollama is available
-    const isHealthy = await ollamaService.checkHealth();
+    // Check if Gemini is available
+    const isHealthy = await geminiService.checkHealth();
     if (!isHealthy) {
       return res.status(503).json({
         error: 'Service unavailable',
-        message: 'Ollama service is not available. Please ensure Ollama is running.'
+        message: 'Gemini service is not available. Check API key.'
       });
     }
 
@@ -51,8 +51,8 @@ router.post('/ask', async (req, res) => {
       fullPrompt = `Context: ${context}\n\nQuestion: ${question}`;
     }
 
-    // Generate response using Ollama
-    const response = await ollamaService.generateResponse(
+    // Generate response using Gemini
+    const response = await geminiService.generateResponse(
       fullPrompt,
       BHAGAVAD_GITA_SYSTEM_PROMPT
     );
@@ -84,17 +84,17 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    // Check if Ollama is available
-    const isHealthy = await ollamaService.checkHealth();
+    // Check if Gemini is available
+    const isHealthy = await geminiService.checkHealth();
     if (!isHealthy) {
       return res.status(503).json({
         error: 'Service unavailable',
-        message: 'Ollama service is not available. Please ensure Ollama is running.'
+        message: 'Gemini service is not available.'
       });
     }
 
     // Generate response using chat endpoint
-    const response = await ollamaService.chat(
+    const response = await geminiService.chat(
       messages,
       BHAGAVAD_GITA_SYSTEM_PROMPT
     );
@@ -113,17 +113,17 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// GET /api/spiritual/health - Check Ollama service health
+// GET /api/spiritual/health - Check Gemini service health
 router.get('/health', async (req, res) => {
   try {
-    const isHealthy = await ollamaService.checkHealth();
-    const models = await ollamaService.listModels();
+    const isHealthy = await geminiService.checkHealth();
+    const models = await geminiService.listModels();
 
     res.json({
       status: isHealthy ? 'healthy' : 'unavailable',
-      ollama_available: isHealthy,
+      gemini_available: isHealthy,
       available_models: models.map(m => m.name),
-      current_model: process.env.OLLAMA_MODEL || 'llama3.1:8b'
+      current_model: 'gemini-2.5-flash'
     });
   } catch (error) {
     res.status(500).json({
@@ -136,10 +136,10 @@ router.get('/health', async (req, res) => {
 // GET /api/spiritual/models - List available models
 router.get('/models', async (req, res) => {
   try {
-    const models = await ollamaService.listModels();
+    const models = await geminiService.listModels();
     res.json({
       models: models,
-      current_model: process.env.OLLAMA_MODEL || 'llama3.1:8b'
+      current_model: 'gemini-2.5-flash'
     });
   } catch (error) {
     res.status(500).json({

@@ -1,10 +1,19 @@
-import React from 'react';
-import { BookOpen, Sparkles, Quote } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Sparkles, Quote, ChevronDown, ChevronUp } from 'lucide-react';
 
 const ResponseDisplay = ({ response }) => {
+  const [expandedVerses, setExpandedVerses] = useState({});
+
   if (!response) return null;
 
   const { query, guidance, verses_referenced, timestamp } = response;
+
+  const toggleVerse = (index) => {
+    setExpandedVerses(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-12 animate-slide-up">
@@ -27,7 +36,7 @@ const ResponseDisplay = ({ response }) => {
             Spiritual Guidance
           </h2>
         </div>
-        
+
         <div className="prose prose-lg max-w-none">
           <p className="text-gray-700 leading-relaxed whitespace-pre-line">
             {guidance}
@@ -56,7 +65,8 @@ const ResponseDisplay = ({ response }) => {
             {verses_referenced.map((verse, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-spiritual-gold"
+                onClick={() => toggleVerse(index)}
+                className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-all duration-200 border-l-4 border-spiritual-gold cursor-pointer group"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-2">
@@ -67,17 +77,37 @@ const ResponseDisplay = ({ response }) => {
                       Bhagavad Gita {verse.reference}
                     </span>
                   </div>
+                  {expandedVerses[index] ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-spiritual-blue transition-colors" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-spiritual-blue transition-colors" />
+                  )}
                 </div>
-                
-                {verse.chapter_title && (
-                  <p className="text-sm text-gray-600 mb-2 italic">
-                    {verse.chapter_title}
-                  </p>
-                )}
-                
-                <p className="text-gray-800 leading-relaxed">
-                  {verse.translation}
-                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                      Translation
+                    </span>
+                    <p className="text-gray-900 leading-relaxed font-bold">
+                      {verse.translation}
+                    </p>
+                  </div>
+
+                  <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${expandedVerses[index] ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}>
+                    <div className="overflow-hidden">
+                      <div className="pt-2 border-t border-gray-100 mt-2">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                          Purport
+                        </span>
+                        <p className="text-gray-700 leading-relaxed text-sm">
+                          {verse.purport || "No purport available."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
