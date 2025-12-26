@@ -3,6 +3,10 @@
     "appName": "Sarthi",
     "webDir": "build",
     "server": {
-        "androidScheme": "https"
+        "androidScheme": "https",
+        "iosScheme": "https"
+    },
+    "ios": {
+        "contentInset": "automatic"
     }
 }
