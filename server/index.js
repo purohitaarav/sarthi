@@ -1,3 +1,5 @@
+console.log('🔥 CONFIRMED: server/index.js is running (clean build)');
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
