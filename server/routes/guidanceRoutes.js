@@ -93,55 +93,85 @@ async function parseQueryWithLLM(query) {
 }
 
 /* ===========================
-   Caches (SAFE, BOUNDED)
+   Caches (LAZY LOADING)
    =========================== */
 
 let embeddingsCache = null;
 let versesCache = null;
+let embeddingsLoadingPromise = null;
+let versesLoadingPromise = null;
 
-async function preload() {
-  console.log('[Preload] Starting data preloading...');
-  try {
-    const [embRes, verseRes] = await Promise.all([
-      withTimeout(
+async function getEmbeddingsCache() {
+  if (embeddingsCache) return embeddingsCache;
+  if (embeddingsLoadingPromise) return embeddingsLoadingPromise;
+
+  embeddingsLoadingPromise = (async () => {
+    console.log('[Cache] Loading embeddings in background...');
+    try {
+      const embRes = await withTimeout(
         executeQuery('SELECT verse_id, embedding FROM verse_embeddings LIMIT ?', [MAX_CACHE_ROWS]),
-        DB_TIMEOUT_MS,
-        'Embeddings preload'
-      ),
-      withTimeout(
+        DB_TIMEOUT_MS * 3, // Longer timeout for background load
+        'Embeddings load'
+      );
+
+      embeddingsCache = embRes.rows.map(r => ({
+        verse_id: r.verse_id,
+        vector: blobToFloat32Array(r.embedding)
+      }));
+
+      console.log(`[Cache] ✅ Loaded ${embeddingsCache.length} embeddings`);
+      return embeddingsCache;
+    } catch (err) {
+      console.error('[Cache] ❌ Failed to load embeddings:', err.message);
+      embeddingsLoadingPromise = null; // Allow retry
+      throw err;
+    }
+  })();
+
+  return embeddingsLoadingPromise;
+}
+
+async function getVersesCache() {
+  if (versesCache) return versesCache;
+  if (versesLoadingPromise) return versesLoadingPromise;
+
+  versesLoadingPromise = (async () => {
+    console.log('[Cache] Loading verses in background...');
+    try {
+      const verseRes = await withTimeout(
         executeQuery(`
           SELECT v.id, v.verse_number, v.translation_english, v.purport, c.chapter_number
           FROM verses v
           JOIN chapters c ON v.chapter_id = c.id
           LIMIT ${MAX_CACHE_ROWS}
         `),
-        DB_TIMEOUT_MS,
-        'Verses preload'
-      )
-    ]);
+        DB_TIMEOUT_MS * 3, // Longer timeout for background load
+        'Verses load'
+      );
 
-    embeddingsCache = embRes.rows.map(r => ({
-      verse_id: r.verse_id,
-      vector: blobToFloat32Array(r.embedding)
-    }));
+      versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
 
-    versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
+      console.log(`[Cache] ✅ Loaded ${versesCache.size} verses`);
+      return versesCache;
+    } catch (err) {
+      console.error('[Cache] ❌ Failed to load verses:', err.message);
+      versesLoadingPromise = null; // Allow retry
+      throw err;
+    }
+  })();
 
-    console.log(`[Preload] Successfully loaded ${embeddingsCache.length} embeddings and ${versesCache.size} verses.`);
-  } catch (err) {
-    console.error('[Preload] Failed to preload data:', err.message);
-    throw err; // Critical failure
-  }
+  return versesLoadingPromise;
 }
 
-function getEmbeddingsCache() {
-  if (!embeddingsCache) throw new Error('Embeddings cache not preloaded');
-  return embeddingsCache;
-}
-
-function getVersesCache() {
-  if (!versesCache) throw new Error('Verses cache not preloaded');
-  return versesCache;
+// Background initialization function (non-blocking)
+function initializeCache() {
+  console.log('[Cache] Starting background initialization...');
+  Promise.all([
+    getEmbeddingsCache().catch(err => console.error('[Cache] Embeddings init failed:', err.message)),
+    getVersesCache().catch(err => console.error('[Cache] Verses init failed:', err.message))
+  ]).then(() => {
+    console.log('[Cache] 🎉 Background initialization complete');
+  });
 }
 
 /* ===========================
@@ -149,9 +179,10 @@ function getVersesCache() {
    =========================== */
 
 async function performHybridSearch(query, maxResults) {
-  console.log('[Search] Loading caches');
-  const embeddings = getEmbeddingsCache();
-  const verses = getVersesCache();
+  console.log('[Search] Retrieving caches...');
+  const embeddings = await getEmbeddingsCache();
+  const verses = await getVersesCache();
+
 
   console.log('[Search] Running LLM tasks');
   const [parsedQuery, embedding] = await Promise.all([
@@ -238,4 +269,5 @@ ${v.purport || ''}
   }
 });
 
-module.exports = { router, preload };
+module.exports = { router, initializeCache };
+

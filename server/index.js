@@ -7,6 +7,9 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
+// Track startup time
+const startTime = Date.now();
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -64,7 +67,7 @@ const userRoutes = require('./routes/userRoutes');
 const reflectionRoutes = require('./routes/reflectionRoutes');
 const spiritualRoutes = require('./routes/spiritualRoutes');
 const gitaRoutes = require('./routes/gitaRoutes');
-const { router: guidanceRoutes, preload: preloadGuidance } = require('./routes/guidanceRoutes');
+const { router: guidanceRoutes, initializeCache: initializeGuidanceCache } = require('./routes/guidanceRoutes');
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -157,18 +160,12 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-// Preload data and start server
-const startServer = async () => {
-  try {
-    await preloadGuidance();
-    app.listen(PORT, () => {
-      console.log(`🚀 Sarthi server is running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (err) {
-    console.error('💥 FAILED TO START SERVER:', err.message);
-    process.exit(1);
-  }
-};
+// Start server immediately (no blocking)
+app.listen(PORT, () => {
+  console.log(`🚀 Sarthi server is running on port ${PORT}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`⚡ Server started in ${Date.now() - startTime}ms`);
 
-startServer();
+  // Start background cache initialization (non-blocking)
+  initializeGuidanceCache();
+});
