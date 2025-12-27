@@ -88,7 +88,7 @@ const userRoutes = require('./routes/userRoutes');
 const reflectionRoutes = require('./routes/reflectionRoutes');
 const spiritualRoutes = require('./routes/spiritualRoutes');
 const gitaRoutes = require('./routes/gitaRoutes');
-const { router: guidanceRoutes, initializeCache: initializeGuidanceCache } = require('./routes/guidanceRoutes');
+const { router: guidanceRoutes } = require('./routes/guidanceRoutes'); // Static cache - no init needed!
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -181,12 +181,11 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-// Start server immediately (no blocking)
+// Start server immediately (no blocking, no database!)
 app.listen(PORT, () => {
   console.log(`🚀 Sarthi server is running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`⚡ Server started in ${Date.now() - startTime}ms`);
-
-  // Start background cache initialization (non-blocking)
-  initializeGuidanceCache();
+  console.log(`💾 Static cache ready - no database needed!`);
 });
+
