@@ -237,6 +237,7 @@ async function performHybridSearch(query, maxResults) {
 
 router.post('/ask', async (req, res) => {
   const startedAt = Date.now();
+  const requestId = req.id || Math.random().toString(36).substring(7);
   let guidance = '';
 
   try {
