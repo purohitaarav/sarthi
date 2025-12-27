@@ -93,42 +93,65 @@ async function parseQueryWithLLM(query) {
 }
 
 /* ===========================
-   Caches (LAZY LOADING)
+   Caches (LAZY LOADING WITH RETRY)
    =========================== */
 
 let embeddingsCache = null;
 let versesCache = null;
 let embeddingsLoadingPromise = null;
 let versesLoadingPromise = null;
-let embeddingsCacheLoadFailed = false;
-let versesCacheLoadFailed = false;
 
 async function getEmbeddingsCache() {
   if (embeddingsCache) return embeddingsCache;
   if (embeddingsLoadingPromise) return embeddingsLoadingPromise;
 
-  // Fail fast if previous load failed
-  if (embeddingsCacheLoadFailed) {
-    throw new Error('Embeddings cache unavailable - previous load failed');
-  }
-
   embeddingsLoadingPromise = (async () => {
-    console.log('[Cache] Loading embeddings in background...');
+    console.log(`[Cache] 🔄 Loading embeddings (attempt 1) at ${new Date().toISOString()}...`);
+
     try {
-      const embRes = await executeQuery('SELECT verse_id, embedding FROM verse_embeddings LIMIT ?', [MAX_CACHE_ROWS]);
+      // First attempt - no timeout, let it complete naturally
+      const embRes = await executeQuery(
+        'SELECT verse_id, embedding FROM verse_embeddings LIMIT ?',
+        [MAX_CACHE_ROWS]
+      );
 
       embeddingsCache = embRes.rows.map(r => ({
         verse_id: r.verse_id,
         vector: blobToFloat32Array(r.embedding)
       }));
 
-      console.log(`[Cache] ✅ Loaded ${embeddingsCache.length} embeddings`);
+      console.log(`✅ Cache loaded: ${embeddingsCache.length} embeddings at ${new Date().toISOString()}`);
       return embeddingsCache;
+
     } catch (err) {
-      console.error('[Cache] ❌ Failed to load embeddings:', err.message);
-      embeddingsCacheLoadFailed = true; // Mark as failed
-      embeddingsLoadingPromise = null;
-      throw err;
+      console.error(`[Cache] ❌ Attempt 1 failed: ${err.message}`);
+      console.log('[Cache] 🔄 Retrying in 5 seconds...');
+
+      // Wait 5 seconds before retry
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      try {
+        console.log(`[Cache] 🔄 Loading embeddings (attempt 2) at ${new Date().toISOString()}...`);
+        const embRes = await executeQuery(
+          'SELECT verse_id, embedding FROM verse_embeddings LIMIT ?',
+          [MAX_CACHE_ROWS]
+        );
+
+        embeddingsCache = embRes.rows.map(r => ({
+          verse_id: r.verse_id,
+          vector: blobToFloat32Array(r.embedding)
+        }));
+
+        console.log(`✅ Cache loaded: ${embeddingsCache.length} embeddings at ${new Date().toISOString()} (retry succeeded)`);
+        return embeddingsCache;
+
+      } catch (retryErr) {
+        console.error(`[Cache] ❌❌ BOTH ATTEMPTS FAILED`);
+        console.error(`[Cache] Error details: ${retryErr.message}`);
+        console.error(`[Cache] Stack: ${retryErr.stack}`);
+        embeddingsLoadingPromise = null; // Allow future retries
+        throw retryErr;
+      }
     }
   })();
 
@@ -139,30 +162,51 @@ async function getVersesCache() {
   if (versesCache) return versesCache;
   if (versesLoadingPromise) return versesLoadingPromise;
 
-  // Fail fast if previous load failed
-  if (versesCacheLoadFailed) {
-    throw new Error('Verses cache unavailable - previous load failed');
-  }
-
   versesLoadingPromise = (async () => {
-    console.log('[Cache] Loading verses in background...');
+    console.log(`[Cache] 🔄 Loading verses (attempt 1) at ${new Date().toISOString()}...`);
+
     try {
+      // First attempt - no timeout, let it complete naturally
       const verseRes = await executeQuery(`
+        SELECT v.id, v.verse_number, v.translation_english, v.purport, c.chapter_number
+        FROM verses v
+        JOIN chapters c ON v.chapter_id = c.id
+        LIMIT ${MAX_CACHE_ROWS}
+      `);
+
+      versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
+
+      console.log(`✅ Cache loaded: ${versesCache.size} verses at ${new Date().toISOString()}`);
+      return versesCache;
+
+    } catch (err) {
+      console.error(`[Cache] ❌ Attempt 1 failed: ${err.message}`);
+      console.log('[Cache] 🔄 Retrying in 5 seconds...');
+
+      // Wait 5 seconds before retry
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      try {
+        console.log(`[Cache] 🔄 Loading verses (attempt 2) at ${new Date().toISOString()}...`);
+        const verseRes = await executeQuery(`
           SELECT v.id, v.verse_number, v.translation_english, v.purport, c.chapter_number
           FROM verses v
           JOIN chapters c ON v.chapter_id = c.id
           LIMIT ${MAX_CACHE_ROWS}
         `);
 
-      versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
+        versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
 
-      console.log(`[Cache] ✅ Loaded ${versesCache.size} verses`);
-      return versesCache;
-    } catch (err) {
-      console.error('[Cache] ❌ Failed to load verses:', err.message);
-      versesCacheLoadFailed = true; // Mark as failed
-      versesLoadingPromise = null;
-      throw err;
+        console.log(`✅ Cache loaded: ${versesCache.size} verses at ${new Date().toISOString()} (retry succeeded)`);
+        return versesCache;
+
+      } catch (retryErr) {
+        console.error(`[Cache] ❌❌ BOTH ATTEMPTS FAILED`);
+        console.error(`[Cache] Error details: ${retryErr.message}`);
+        console.error(`[Cache] Stack: ${retryErr.stack}`);
+        versesLoadingPromise = null; // Allow future retries
+        throw retryErr;
+      }
     }
   })();
 
@@ -188,12 +232,37 @@ async function performHybridSearch(query, maxResults) {
   const searchStart = Date.now();
 
   console.log('[Search] [SUBSTEP 2.1] Retrieving embeddings cache...');
-  const embeddings = await getEmbeddingsCache();
-  console.log(`[Search] [SUBSTEP 2.1 DONE] Got ${embeddings.length} embeddings (${Date.now() - searchStart}ms)`);
+
+  // Add 10-second timeout for cache loading - fail fast if cache isn't ready
+  const cacheTimeout = 10000;
+  let embeddings, verses;
+
+  try {
+    embeddings = await Promise.race([
+      getEmbeddingsCache(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Cache loading timeout - embeddings not ready after 10s')), cacheTimeout)
+      )
+    ]);
+    console.log(`[Search] [SUBSTEP 2.1 DONE] Got ${embeddings.length} embeddings (${Date.now() - searchStart}ms)`);
+  } catch (err) {
+    console.error(`[Search] ❌ Cache timeout: ${err.message}`);
+    throw new Error('Service temporarily unavailable - cache still loading. Please try again in 30 seconds.');
+  }
 
   console.log('[Search] [SUBSTEP 2.2] Retrieving verses cache...');
-  const verses = await getVersesCache();
-  console.log(`[Search] [SUBSTEP 2.2 DONE] Got ${verses.size} verses (${Date.now() - searchStart}ms)`);
+  try {
+    verses = await Promise.race([
+      getVersesCache(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Cache loading timeout - verses not ready after 10s')), cacheTimeout)
+      )
+    ]);
+    console.log(`[Search] [SUBSTEP 2.2 DONE] Got ${verses.size} verses (${Date.now() - searchStart}ms)`);
+  } catch (err) {
+    console.error(`[Search] ❌ Cache timeout: ${err.message}`);
+    throw new Error('Service temporarily unavailable - cache still loading. Please try again in 30 seconds.');
+  }
 
   console.log('[Search] [SUBSTEP 2.3] Running parallel LLM tasks (query parsing + embedding)...');
   const [parsedQuery, embedding] = await Promise.all([
