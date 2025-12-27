@@ -82,46 +82,20 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve static files in production (but only for non-API routes)
-if (process.env.NODE_ENV === 'production') {
-  // Only serve static files for non-API routes
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      return next(); // Skip static file serving for API routes
-    }
-    express.static(path.join(__dirname, '../client/build'))(req, res, next);
-  });
-
-  // Only handle GET requests for SPA routing (not API routes)
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      return next(); // Skip SPA routing for API routes
-    }
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
-}
-
 // 404 handler - must be after all routes
 app.use((req, res) => {
-  // Return JSON for API routes, HTML for others
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({
-      success: false,
-      error: 'Not Found',
-      message: `Route ${req.method} ${req.path} not found`,
-      availableEndpoints: [
-        'GET /api/health',
-        'GET /api/users',
-        'GET /api/items',
-        'POST /api/spiritual/ask',
-        'GET /api/gita/chapters',
-        'GET /api/guidance/verses',
-        'POST /api/guidance/ask'
-      ]
-    });
-  }
-  // For non-API routes, return HTML 404
-  res.status(404).send('Not Found');
+  res.status(404).json({
+    success: false,
+    error: 'Not Found',
+    message: `Route ${req.method} ${req.path} not found`,
+    availableEndpoints: [
+      'GET /api/health',
+      'GET /api/users',
+      'POST /api/spiritual/ask',
+      'GET /api/gita/chapters',
+      'POST /api/guidance/ask'
+    ]
+  });
 });
 
 // Global error handling middleware
