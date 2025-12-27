@@ -33,17 +33,19 @@ class GeminiService {
    */
   async generateEmbedding(prompt) {
     if (!this.genAI) throw new Error('Gemini API Key missing');
+    const start = Date.now();
     try {
-      console.log(`[Gemini] Generating embedding for text: "${prompt.substring(0, 30)}..."`);
+      console.log(`[Gemini] 🔵 START: Generating embedding (timeout: 30s)`);
       const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
       const result = await this._withTimeout(
         model.embedContent(prompt),
-        15000,
+        30000,
         'Embedding'
       );
+      console.log(`[Gemini] ✅ DONE: Embedding generated in ${Date.now() - start}ms`);
       return result.embedding.values;
     } catch (error) {
-      console.error('[Gemini] Embeddings Error:', error.message);
+      console.error(`[Gemini] ❌ ERROR: Embedding failed after ${Date.now() - start}ms:`, error.message);
       throw error;
     }
   }
@@ -57,8 +59,9 @@ class GeminiService {
    */
   async generateResponse(prompt, systemPrompt = '', stream = false) {
     if (!this.genAI) throw new Error('Gemini API Key missing');
+    const start = Date.now();
     try {
-      console.log(`[Gemini] Generating response... (System prompt length: ${systemPrompt.length})`);
+      console.log(`[Gemini] 🔵 START: Generating response (timeout: 30s, prompt length: ${prompt.length})`);
       const model = this.genAI.getGenerativeModel({
         model: this.modelName,
         systemInstruction: systemPrompt
@@ -66,13 +69,15 @@ class GeminiService {
 
       const result = await this._withTimeout(
         model.generateContent(prompt),
-        60000,
+        30000,
         'Generation'
       );
       const response = await result.response;
-      return response.text();
+      const text = response.text();
+      console.log(`[Gemini] ✅ DONE: Response generated in ${Date.now() - start}ms (${text.length} chars)`);
+      return text;
     } catch (error) {
-      console.error('[Gemini] Generation Error:', error.message);
+      console.error(`[Gemini] ❌ ERROR: Generation failed after ${Date.now() - start}ms:`, error.message);
       throw error;
     }
   }

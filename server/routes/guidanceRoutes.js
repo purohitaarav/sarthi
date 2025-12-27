@@ -100,10 +100,17 @@ let embeddingsCache = null;
 let versesCache = null;
 let embeddingsLoadingPromise = null;
 let versesLoadingPromise = null;
+let embeddingsCacheLoadFailed = false;
+let versesCacheLoadFailed = false;
 
 async function getEmbeddingsCache() {
   if (embeddingsCache) return embeddingsCache;
   if (embeddingsLoadingPromise) return embeddingsLoadingPromise;
+
+  // Fail fast if previous load failed
+  if (embeddingsCacheLoadFailed) {
+    throw new Error('Embeddings cache unavailable - previous load failed');
+  }
 
   embeddingsLoadingPromise = (async () => {
     console.log('[Cache] Loading embeddings in background...');
@@ -119,7 +126,8 @@ async function getEmbeddingsCache() {
       return embeddingsCache;
     } catch (err) {
       console.error('[Cache] ❌ Failed to load embeddings:', err.message);
-      embeddingsLoadingPromise = null; // Allow retry
+      embeddingsCacheLoadFailed = true; // Mark as failed
+      embeddingsLoadingPromise = null;
       throw err;
     }
   })();
@@ -130,6 +138,11 @@ async function getEmbeddingsCache() {
 async function getVersesCache() {
   if (versesCache) return versesCache;
   if (versesLoadingPromise) return versesLoadingPromise;
+
+  // Fail fast if previous load failed
+  if (versesCacheLoadFailed) {
+    throw new Error('Verses cache unavailable - previous load failed');
+  }
 
   versesLoadingPromise = (async () => {
     console.log('[Cache] Loading verses in background...');
@@ -147,7 +160,8 @@ async function getVersesCache() {
       return versesCache;
     } catch (err) {
       console.error('[Cache] ❌ Failed to load verses:', err.message);
-      versesLoadingPromise = null; // Allow retry
+      versesCacheLoadFailed = true; // Mark as failed
+      versesLoadingPromise = null;
       throw err;
     }
   })();
@@ -171,20 +185,29 @@ function initializeCache() {
    =========================== */
 
 async function performHybridSearch(query, maxResults) {
-  console.log('[Search] Retrieving caches...');
+  const searchStart = Date.now();
+
+  console.log('[Search] [SUBSTEP 2.1] Retrieving embeddings cache...');
   const embeddings = await getEmbeddingsCache();
+  console.log(`[Search] [SUBSTEP 2.1 DONE] Got ${embeddings.length} embeddings (${Date.now() - searchStart}ms)`);
+
+  console.log('[Search] [SUBSTEP 2.2] Retrieving verses cache...');
   const verses = await getVersesCache();
+  console.log(`[Search] [SUBSTEP 2.2 DONE] Got ${verses.size} verses (${Date.now() - searchStart}ms)`);
 
-
-  console.log('[Search] Running LLM tasks');
+  console.log('[Search] [SUBSTEP 2.3] Running parallel LLM tasks (query parsing + embedding)...');
   const [parsedQuery, embedding] = await Promise.all([
     parseQueryWithLLM(query),
     withTimeout(
       geminiService.generateEmbedding(query),
       EMBEDDING_TIMEOUT_MS,
       'Embedding generation'
-    ).catch(() => null)
+    ).catch(err => {
+      console.warn('[Search] Embedding generation failed:', err.message);
+      return null;
+    })
   ]);
+  console.log(`[Search] [SUBSTEP 2.3 DONE] LLM tasks complete (${Date.now() - searchStart}ms)`);
 
   const keywords = extractKeywords(query);
 
@@ -220,27 +243,45 @@ router.post('/ask', async (req, res) => {
     const { query, maxVerses = DEFAULT_MAX_VERSES } = req.body || {};
     if (!query) return res.status(400).json({ error: 'Query required' });
 
-    console.log('🔍 Retrieving verses...');
+    console.log(`[${requestId}] [STEP 1] Starting request - Query: "${query.substring(0, 50)}..."`);
+    console.log(`[${requestId}] [STEP 1.1] Cache status - Embeddings: ${!!embeddingsCache}, Verses: ${!!versesCache}`);
+    if (embeddingsCache) console.log(`[${requestId}] [STEP 1.2] Cache size - Embeddings: ${embeddingsCache.length}`);
+    if (versesCache) console.log(`[${requestId}] [STEP 1.3] Cache size - Verses: ${versesCache.size}`);
+
+    console.log(`[${requestId}] [STEP 2] Retrieving verses via hybrid search...`);
     const verses = await performHybridSearch(query, maxVerses);
+    console.log(`[${requestId}] [STEP 2 DONE] Found ${verses.length} verses (${Date.now() - startedAt}ms elapsed)`);
 
     if (!verses.length) {
       return res.status(404).json({ error: 'No verses found' });
     }
 
+    console.log(`[${requestId}] [STEP 3] Building verse context...`);
     const verseContext = verses.map(v => `
 [BHAGAVAD GITA ${v.chapter_number}.${v.verse_number}]
 ${v.translation_english}
 ${v.purport || ''}
     `.trim()).join('\n\n---\n\n');
+    console.log(`[${requestId}] [STEP 3 DONE] Context built (${Date.now() - startedAt}ms elapsed)`);
 
     const prompt = `Verses:\n${verseContext}\n\nQuestion: ${query}`;
 
-    guidance = await withTimeout(
-      geminiService.generateResponse(prompt, GUIDANCE_SYSTEM_PROMPT),
-      GENERATION_TIMEOUT_MS,
-      'Response generation'
-    );
+    console.log(`[${requestId}] [STEP 4] Calling Gemini for response generation (timeout: ${GENERATION_TIMEOUT_MS}ms)...`);
+    try {
+      guidance = await withTimeout(
+        geminiService.generateResponse(prompt, GUIDANCE_SYSTEM_PROMPT),
+        GENERATION_TIMEOUT_MS,
+        'Response generation'
+      );
+      console.log(`[${requestId}] [STEP 4 DONE] Gemini response received (${Date.now() - startedAt}ms elapsed)`);
+    } catch (genErr) {
+      console.error(`[${requestId}] [STEP 4 ERROR] Gemini generation failed: ${genErr.message} (${Date.now() - startedAt}ms elapsed)`);
 
+      // Fallback response
+      guidance = "I found relevant verses for your question, but I'm having trouble generating a detailed response right now. Please review the verses below for guidance.";
+    }
+
+    console.log(`[${requestId}] [STEP 5] Sending response (total: ${Date.now() - startedAt}ms)`);
     return res.json({
       success: true,
       latency_ms: Date.now() - startedAt,
@@ -253,7 +294,8 @@ ${v.purport || ''}
     });
 
   } catch (err) {
-    console.error('❌ /ask failed:', err.message);
+    console.error(`[${requestId}] ❌ /ask failed at ${Date.now() - startedAt}ms:`, err.message);
+    console.error(`[${requestId}] Stack:`, err.stack);
     return res.status(500).json({
       error: 'Internal error',
       latency_ms: Date.now() - startedAt
