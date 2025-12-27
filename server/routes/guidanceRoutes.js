@@ -99,48 +99,48 @@ async function parseQueryWithLLM(query) {
 let embeddingsCache = null;
 let versesCache = null;
 
-async function getEmbeddingsCache() {
-  if (embeddingsCache) return embeddingsCache;
+async function preload() {
+  console.log('[Preload] Starting data preloading...');
+  try {
+    const [embRes, verseRes] = await Promise.all([
+      withTimeout(
+        executeQuery('SELECT verse_id, embedding FROM verse_embeddings LIMIT ?', [MAX_CACHE_ROWS]),
+        DB_TIMEOUT_MS,
+        'Embeddings preload'
+      ),
+      withTimeout(
+        executeQuery(`
+          SELECT v.id, v.verse_number, v.translation_english, v.purport, c.chapter_number
+          FROM verses v
+          JOIN chapters c ON v.chapter_id = c.id
+          LIMIT ${MAX_CACHE_ROWS}
+        `),
+        DB_TIMEOUT_MS,
+        'Verses preload'
+      )
+    ]);
 
-  console.log('[Cache] Loading embeddings');
-  const res = await withTimeout(
-    executeQuery(
-      'SELECT verse_id, embedding FROM verse_embeddings LIMIT ?',
-      [MAX_CACHE_ROWS]
-    ),
-    DB_TIMEOUT_MS,
-    'Embeddings query'
-  );
+    embeddingsCache = embRes.rows.map(r => ({
+      verse_id: r.verse_id,
+      vector: blobToFloat32Array(r.embedding)
+    }));
 
-  embeddingsCache = res.rows.map(r => ({
-    verse_id: r.verse_id,
-    vector: blobToFloat32Array(r.embedding)
-  }));
+    versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
 
-  console.log(`[Cache] Loaded ${embeddingsCache.length} embeddings`);
+    console.log(`[Preload] Successfully loaded ${embeddingsCache.length} embeddings and ${versesCache.size} verses.`);
+  } catch (err) {
+    console.error('[Preload] Failed to preload data:', err.message);
+    throw err; // Critical failure
+  }
+}
+
+function getEmbeddingsCache() {
+  if (!embeddingsCache) throw new Error('Embeddings cache not preloaded');
   return embeddingsCache;
 }
 
-async function getVersesCache() {
-  if (versesCache) return versesCache;
-
-  console.log('[Cache] Loading verses');
-  const res = await withTimeout(
-    executeQuery(`
-      SELECT 
-        v.id, v.verse_number,
-        v.translation_english, v.purport,
-        c.chapter_number
-      FROM verses v
-      JOIN chapters c ON v.chapter_id = c.id
-      LIMIT ${MAX_CACHE_ROWS}
-    `),
-    DB_TIMEOUT_MS,
-    'Verses query'
-  );
-
-  versesCache = new Map(res.rows.map(v => [v.id, v]));
-  console.log(`[Cache] Loaded ${versesCache.size} verses`);
+function getVersesCache() {
+  if (!versesCache) throw new Error('Verses cache not preloaded');
   return versesCache;
 }
 
@@ -150,8 +150,8 @@ async function getVersesCache() {
 
 async function performHybridSearch(query, maxResults) {
   console.log('[Search] Loading caches');
-  const embeddings = await getEmbeddingsCache();
-  const verses = await getVersesCache();
+  const embeddings = getEmbeddingsCache();
+  const verses = getVersesCache();
 
   console.log('[Search] Running LLM tasks');
   const [parsedQuery, embedding] = await Promise.all([
@@ -238,4 +238,4 @@ ${v.purport || ''}
   }
 });
 
-module.exports = router;
+module.exports = { router, preload };

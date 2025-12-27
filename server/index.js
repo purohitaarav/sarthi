@@ -63,7 +63,7 @@ const userRoutes = require('./routes/userRoutes');
 const reflectionRoutes = require('./routes/reflectionRoutes');
 const spiritualRoutes = require('./routes/spiritualRoutes');
 const gitaRoutes = require('./routes/gitaRoutes');
-const guidanceRoutes = require('./routes/guidanceRoutes');
+const { router: guidanceRoutes, preload: preloadGuidance } = require('./routes/guidanceRoutes');
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -156,8 +156,18 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Sarthi server is running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Preload data and start server
+const startServer = async () => {
+  try {
+    await preloadGuidance();
+    app.listen(PORT, () => {
+      console.log(`🚀 Sarthi server is running on port ${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (err) {
+    console.error('💥 FAILED TO START SERVER:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();
