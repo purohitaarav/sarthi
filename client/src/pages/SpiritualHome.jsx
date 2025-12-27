@@ -15,9 +15,17 @@ const SpiritualHome = () => {
     setError(null);
     setResponse(null);
 
+    const requestUrl = `${API_CONFIG.baseURL}${API_ENDPOINTS.guidanceAsk}`;
+    console.log('Making request to:', requestUrl);
+    console.log('Base URL:', API_CONFIG.baseURL);
+    console.log('Endpoint:', API_ENDPOINTS.guidanceAsk);
+    console.log('Timeout set to:', API_CONFIG.timeout, 'ms');
+    const startTime = Date.now();
+
     try {
+      // Make request to guidance/ask endpoint (matches web version)
       const result = await axios.post(
-        `${API_CONFIG.baseURL}${API_ENDPOINTS.guidanceAsk}`,
+        requestUrl,
         {
           query: query,
           maxVerses: 5
@@ -27,6 +35,9 @@ const SpiritualHome = () => {
           headers: API_CONFIG.headers
         }
       );
+      
+      const duration = Date.now() - startTime;
+      console.log('Request completed in:', duration, 'ms');
 
       if (result.data.success) {
         setResponse(result.data);
@@ -38,19 +49,42 @@ const SpiritualHome = () => {
           });
         }, 100);
       } else {
-        setError(result.data.message || 'Failed to get guidance');
+        setError(result.data.message || result.data.error || 'Failed to get guidance');
       }
     } catch (err) {
+      const duration = Date.now() - startTime;
       console.error('Error fetching guidance:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      console.error('Request duration before error:', duration, 'ms');
+      console.error('Response status:', err.response?.status);
+      console.error('Response data:', err.response?.data);
 
-      if (err.response?.status === 503) {
+      // Handle timeout errors
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout') || err.message?.includes('Timeout')) {
+        setError('Request timed out. The AI service is taking longer than expected. Please try again with a simpler query.');
+      } else if (err.response?.status === 500) {
+        // Server error - check for specific database errors
+        const errorData = err.response?.data;
+        if (errorData?.error?.includes('no such table') || errorData?.error?.includes('SQLITE_ERROR')) {
+          setError('The server database is not fully set up. Please contact the administrator to initialize the database.');
+        } else if (errorData?.error) {
+          setError(`Server error: ${errorData.error}. Please try again later or contact support.`);
+        } else {
+          setError('The server encountered an error. Please try again later.');
+        }
+      } else if (err.response?.status === 503) {
         setError('AI service is currently unavailable. Please try again later.');
       } else if (err.response?.status === 404) {
         setError('No relevant verses found for your query. Try different keywords.');
+      } else if (err.response?.status === 504) {
+        setError('The server took too long to respond. Please try again.');
       } else if (err.response?.data?.message) {
         setError(err.response.data.message);
+      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK' || err.code === 'ERR_INTERNET_DISCONNECTED') {
+        setError('Network error. Please check your internet connection and try again.');
       } else {
-        setError('Failed to connect to the server. Please try again.');
+        setError(`Failed to get guidance: ${err.message || 'Unknown error'}. Please try again.`);
       }
     } finally {
       setIsLoading(false);

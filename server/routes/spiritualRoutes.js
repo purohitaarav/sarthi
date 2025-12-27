@@ -37,11 +37,15 @@ router.post('/ask', async (req, res) => {
     }
 
     // Check if Gemini is available
-    const isHealthy = await geminiService.checkHealth();
+    const isHealthy = await Promise.race([
+      geminiService.checkHealth(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Health check timed out')), 5000))
+    ]).catch(() => false);
+
     if (!isHealthy) {
       return res.status(503).json({
         error: 'Service unavailable',
-        message: 'Gemini service is not available. Check API key.'
+        message: 'Spiritual guidance system is currently under maintenance.'
       });
     }
 
@@ -52,10 +56,10 @@ router.post('/ask', async (req, res) => {
     }
 
     // Generate response using Gemini
-    const response = await geminiService.generateResponse(
-      fullPrompt,
-      BHAGAVAD_GITA_SYSTEM_PROMPT
-    );
+    const response = await Promise.race([
+      geminiService.generateResponse(fullPrompt, BHAGAVAD_GITA_SYSTEM_PROMPT),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Generation timed out')), 60000))
+    ]);
 
     res.json({
       question: question,

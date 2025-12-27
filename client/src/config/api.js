@@ -1,13 +1,29 @@
 // API Configuration for different environments
+import { Capacitor } from '@capacitor/core';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? 'https://sarthi-backend.onrender.com'
-    : 'http://localhost:5001');
+// In Capacitor (iOS/Android), always use production URL unless explicitly set
+const getApiBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  // Default to production Render server for all platforms
+  return 'https://sarthiai.onrender.com';
+};
+
+const API_BASE_URL = getApiBaseURL();
+
+// Longer timeout for iOS/Capacitor due to network differences
+const getTimeout = () => {
+  if (Capacitor.isNativePlatform()) {
+    return 180000; // 3 minutes for iOS/Android
+  }
+  return 120000; // 2 minutes for web
+};
 
 export const API_CONFIG = {
   baseURL: API_BASE_URL,
-  timeout: 120000, // 2 minutes for AI responses
+  timeout: getTimeout(),
   headers: {
     'Content-Type': 'application/json',
   }
@@ -16,20 +32,20 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Health
   health: '/api/health',
-  
+
   // Guidance
   guidanceAsk: '/api/guidance/ask',
   guidanceChat: '/api/guidance/chat',
   guidanceVerses: '/api/guidance/verses',
   guidanceTopics: '/api/guidance/topics',
-  
+
   // Gita
   gitaChapters: '/api/gita/chapters',
   gitaVerses: '/api/gita/verses',
   gitaSearch: '/api/gita/search',
   gitaRandom: '/api/gita/random',
   gitaStats: '/api/gita/stats',
-  
+
   // Spiritual
   spiritualAsk: '/api/spiritual/ask',
   spiritualChat: '/api/spiritual/chat',

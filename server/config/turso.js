@@ -4,104 +4,117 @@ const path = require('path');
 let tursoClient = null;
 
 /**
- * Initialize Turso database client
- * Supports both local file and remote Turso database
+ * Decide whether to use Turso or local SQLite.
+ *
+ * Rules:
+ * - FORCE_TURSO=true  → always use Turso (for setup / embeddings)
+ * - NODE_ENV=production → use Turso
+ * - Otherwise → local SQLite
+ */
+function resolveDatabaseURL() {
+  const forceTurso = process.env.FORCE_TURSO === 'true';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (forceTurso || isProduction) {
+    if (!process.env.TURSO_DATABASE_URL) {
+      throw new Error(
+        'TURSO_DATABASE_URL is required when using Turso (FORCE_TURSO or production)'
+      );
+    }
+    console.log('🌐 Using remote Turso database');
+    return process.env.TURSO_DATABASE_URL;
+  }
+
+  console.log('⚠️ Development mode: using local SQLite');
+  return `file:${path.join(__dirname, '../database/gita.db')}`;
+}
+
+/**
+ * Initialize Turso / SQLite client
  */
 function initializeTurso() {
   if (tursoClient) {
     return tursoClient;
   }
 
-  // Force local DB in non-production environments for performance
-  let dbPath = process.env.TURSO_DATABASE_URL;
-  if (process.env.NODE_ENV !== 'production') {
-    dbPath = `file:${path.join(__dirname, '../database/gita.db')}`;
-    console.log('⚠️ Development mode: forcing local SQLite for performance');
-  } else {
-    dbPath = dbPath || `file:${path.join(__dirname, '../database/gita.db')}`;
-  }
+  const dbUrl = resolveDatabaseURL();
 
-  console.log('🔌 Turso Config:', {
+  console.log('🔌 Database Config:', {
     cwd: process.cwd(),
-    dirname: __dirname,
-    dbPath: dbPath,
-    envUrl: process.env.TURSO_DATABASE_URL
+    configFile: __filename,
+    dbUrl,
+    hasAuthToken: Boolean(process.env.TURSO_AUTH_TOKEN),
+    nodeEnv: process.env.NODE_ENV,
+    forceTurso: process.env.FORCE_TURSO,
   });
 
-  const config = {
-    url: dbPath,
-  };
+  const config = { url: dbUrl };
 
-  // Add auth token if using remote Turso database
-  if (process.env.TURSO_AUTH_TOKEN) {
+  if (dbUrl.startsWith('libsql://')) {
+    if (!process.env.TURSO_AUTH_TOKEN) {
+      throw new Error('TURSO_AUTH_TOKEN is required for remote Turso');
+    }
     config.authToken = process.env.TURSO_AUTH_TOKEN;
   }
 
   try {
     tursoClient = createClient(config);
-    console.log('✅ Turso database client initialized');
+    console.log('✅ Database client initialized');
     return tursoClient;
   } catch (error) {
-    console.error('❌ Failed to initialize Turso client:', error.message);
+    console.error('❌ Failed to initialize database client:', error);
     throw error;
   }
 }
 
 /**
- * Get Turso database client instance
+ * Get active DB client
  */
 function getTursoClient() {
-  if (!tursoClient) {
-    return initializeTurso();
-  }
-  return tursoClient;
+  return tursoClient || initializeTurso();
 }
 
 /**
- * Execute a query on Turso database
- * @param {string} sql - SQL query
- * @param {Array} params - Query parameters
- * @returns {Promise<Object>} Query result
+ * Execute a single query
  */
 async function executeQuery(sql, params = []) {
   const client = getTursoClient();
   try {
-    console.log('Executing sql:', sql.substring(0, 50));
     const result = await client.execute({
       sql,
       args: params,
     });
     return result;
   } catch (error) {
-    console.error('Query execution error:', error.message);
+    console.error('❌ Query execution failed:', {
+      sql: sql.slice(0, 120),
+      error: error.message,
+    });
     throw error;
   }
 }
 
 /**
  * Execute multiple queries in a transaction
- * @param {Array} queries - Array of {sql, args} objects
- * @returns {Promise<Array>} Array of results
  */
 async function executeTransaction(queries) {
   const client = getTursoClient();
   try {
-    const results = await client.batch(queries);
-    return results;
+    return await client.batch(queries);
   } catch (error) {
-    console.error('Transaction execution error:', error.message);
+    console.error('❌ Transaction failed:', error.message);
     throw error;
   }
 }
 
 /**
- * Close the database connection
+ * Close DB connection
  */
 async function closeTurso() {
   if (tursoClient) {
     await tursoClient.close();
     tursoClient = null;
-    console.log('✅ Turso database connection closed');
+    console.log('✅ Database connection closed');
   }
 }
 

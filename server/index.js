@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5001;
 
 // CORS Configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGINS?.split(',') || '*'
     : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -28,10 +28,33 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
+  const requestId = Math.random().toString(36).substring(7);
+  req.id = requestId;
+
+  console.log(`[${requestId}] 📨 INCOMING: ${req.method} ${req.path}`);
+
+  // Set a global timeout for the request (2 minutes - less than Axios 3min)
+  const timeoutId = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error(`[${requestId}] ⚠️ GLOBAL TIMEOUT REACHED (120s)`);
+      res.status(504).json({
+        success: false,
+        error: "The request took too long to process. Please try again.",
+        requestId
+      });
+    }
+  }, 120000);
+
   res.on('finish', () => {
+    clearTimeout(timeoutId);
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+    console.log(`[${requestId}] 🏁 FINISHED: ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
   });
+
+  res.on('close', () => {
+    clearTimeout(timeoutId);
+  });
+
   next();
 });
 
@@ -51,40 +74,55 @@ app.use('/api/guidance', guidanceRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'Sarthi API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
 });
 
-// 404 handler - must be after all routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Not Found',
-    message: `Route ${req.method} ${req.path} not found`,
-    availableEndpoints: [
-      'GET /api/health',
-      'GET /api/users',
-      'GET /api/items',
-      'POST /api/spiritual/ask',
-      'GET /api/gita/chapters',
-      'GET /api/guidance/verses',
-      'POST /api/guidance/ask'
-    ]
-  });
-});
-
-// Serve static files in production
+// Serve static files in production (but only for non-API routes)
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  app.get('*', (req, res) => {
+  // Only serve static files for non-API routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next(); // Skip static file serving for API routes
+    }
+    express.static(path.join(__dirname, '../client/build'))(req, res, next);
+  });
+
+  // Only handle GET requests for SPA routing (not API routes)
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next(); // Skip SPA routing for API routes
+    }
     res.sendFile(path.join(__dirname, '../client/build/index.html'));
   });
 }
+
+// 404 handler - must be after all routes
+app.use((req, res) => {
+  // Return JSON for API routes, HTML for others
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      message: `Route ${req.method} ${req.path} not found`,
+      availableEndpoints: [
+        'GET /api/health',
+        'GET /api/users',
+        'GET /api/items',
+        'POST /api/spiritual/ask',
+        'GET /api/gita/chapters',
+        'GET /api/guidance/verses',
+        'POST /api/guidance/ask'
+      ]
+    });
+  }
+  // For non-API routes, return HTML 404
+  res.status(404).send('Not Found');
+});
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

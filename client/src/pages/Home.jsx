@@ -106,7 +106,7 @@ const Home = () => {
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
             </div>
           </Link>
-          
+
           <Link
             to="/tutorials"
             className="group p-6 rounded-lg border border-gray-200 hover:border-primary-500 hover:bg-primary-50 transition-colors"
@@ -119,7 +119,7 @@ const Home = () => {
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
             </div>
           </Link>
-          
+
           <Link
             to="/contact"
             className="group p-6 rounded-lg border border-gray-200 hover:border-primary-500 hover:bg-primary-50 transition-colors"

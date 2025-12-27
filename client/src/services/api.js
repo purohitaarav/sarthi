@@ -1,13 +1,21 @@
 import axios from 'axios';
+import { Capacitor } from '@capacitor/core';
 
 // API Configuration for different environments (matches config/api.js)
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? 'https://sarthi-backend.onrender.com'
-    : 'http://localhost:5001');
+// In Capacitor (iOS/Android), always use production URL unless explicitly set
+const getApiBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  // Default to production Render server for all platforms
+  return 'https://sarthiai.onrender.com';
+};
+
+const API_BASE_URL = getApiBaseURL();
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

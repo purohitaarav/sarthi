@@ -3,16 +3,27 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
-    this.modelName = 'gemini-2.5-flash';
-    // Using standard embedding model as 2.5-pro is a generation model
+    // Standard model names for Gemini 1.5
+    this.modelName = 'gemini-1.5-flash';
     this.embeddingModelName = 'text-embedding-004';
     this.genAI = null;
 
     if (this.apiKey) {
       this.genAI = new GoogleGenerativeAI(this.apiKey);
+      console.log(`✅ GeminiService initialized with model: ${this.modelName}`);
     } else {
       console.warn('⚠️ GEMINI_API_KEY is missing. Service will fail.');
     }
+  }
+
+  // Internal helper for timeouts
+  async _withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`[Gemini] ${label} timed out after ${ms}ms`)), ms)
+      )
+    ]);
   }
 
   /**
@@ -23,12 +34,17 @@ class GeminiService {
   async generateEmbedding(prompt) {
     if (!this.genAI) throw new Error('Gemini API Key missing');
     try {
+      console.log(`[Gemini] Generating embedding for text: "${prompt.substring(0, 30)}..."`);
       const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
-      const result = await model.embedContent(prompt);
+      const result = await this._withTimeout(
+        model.embedContent(prompt),
+        15000,
+        'Embedding'
+      );
       return result.embedding.values;
     } catch (error) {
-      console.error('Gemini Embeddings Error:', error.message);
-      throw new Error(`Failed to generate embedding: ${error.message}`);
+      console.error('[Gemini] Embeddings Error:', error.message);
+      throw error;
     }
   }
 
@@ -42,17 +58,22 @@ class GeminiService {
   async generateResponse(prompt, systemPrompt = '', stream = false) {
     if (!this.genAI) throw new Error('Gemini API Key missing');
     try {
+      console.log(`[Gemini] Generating response... (System prompt length: ${systemPrompt.length})`);
       const model = this.genAI.getGenerativeModel({
         model: this.modelName,
         systemInstruction: systemPrompt
       });
 
-      const result = await model.generateContent(prompt);
+      const result = await this._withTimeout(
+        model.generateContent(prompt),
+        60000,
+        'Generation'
+      );
       const response = await result.response;
       return response.text();
     } catch (error) {
-      console.error('Gemini Generation Error:', error.message);
-      throw new Error(`Failed to generate response: ${error.message}`);
+      console.error('[Gemini] Generation Error:', error.message);
+      throw error;
     }
   }
 
@@ -103,17 +124,19 @@ class GeminiService {
   async checkHealth() {
     if (!this.genAI) return false;
     try {
-      // Light probe: try to get model info or just instantiate
       const model = this.genAI.getGenerativeModel({ model: this.modelName });
-      // We'll trust it works if we have the object, or try a dry run?
-      // A dry run is safer to prove connectivity
-      await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
-        generationConfig: { maxOutputTokens: 1 }
-      });
+      // Use shorter timeout for health check
+      await this._withTimeout(
+        model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+          generationConfig: { maxOutputTokens: 1 }
+        }),
+        5000,
+        'Health check'
+      );
       return true;
     } catch (error) {
-      console.error('Gemini health check failed:', error.message);
+      console.error('[Gemini] Health Check Failed:', error.message);
       return false;
     }
   }
