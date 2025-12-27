@@ -108,11 +108,7 @@ async function getEmbeddingsCache() {
   embeddingsLoadingPromise = (async () => {
     console.log('[Cache] Loading embeddings in background...');
     try {
-      const embRes = await withTimeout(
-        executeQuery('SELECT verse_id, embedding FROM verse_embeddings LIMIT ?', [MAX_CACHE_ROWS]),
-        DB_TIMEOUT_MS * 3, // Longer timeout for background load
-        'Embeddings load'
-      );
+      const embRes = await executeQuery('SELECT verse_id, embedding FROM verse_embeddings LIMIT ?', [MAX_CACHE_ROWS]);
 
       embeddingsCache = embRes.rows.map(r => ({
         verse_id: r.verse_id,
@@ -138,16 +134,12 @@ async function getVersesCache() {
   versesLoadingPromise = (async () => {
     console.log('[Cache] Loading verses in background...');
     try {
-      const verseRes = await withTimeout(
-        executeQuery(`
+      const verseRes = await executeQuery(`
           SELECT v.id, v.verse_number, v.translation_english, v.purport, c.chapter_number
           FROM verses v
           JOIN chapters c ON v.chapter_id = c.id
           LIMIT ${MAX_CACHE_ROWS}
-        `),
-        DB_TIMEOUT_MS * 3, // Longer timeout for background load
-        'Verses load'
-      );
+        `);
 
       versesCache = new Map(verseRes.rows.map(v => [v.id, v]));
 
