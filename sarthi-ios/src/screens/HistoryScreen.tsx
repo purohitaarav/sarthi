@@ -67,7 +67,11 @@ export default function HistoryScreen({ navigation }: Props) {
 
   const handleQueryPress = (pastQuery: PastQuery) => {
     if (pastQuery.response) {
-      navigation.navigate('Response', { response: pastQuery.response });
+      navigation.navigate('Response', {
+        response: pastQuery.response,
+        query: pastQuery.query,
+        askedAt: pastQuery.timestamp,
+      });
     }
   };
 

@@ -1,204 +1,302 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  Animated,
+  Easing,
+} from 'react-native';
+import { Loader2, AlertCircle } from 'lucide-react-native';
 import { guidanceService } from '../services/guidanceService';
-import { colors } from '../theme/colors';
+import { colors, gradients } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { GuidanceResponse } from '../types';
+import GuidanceForm from '../components/GuidanceForm';
+import ResponseDisplay from '../components/ResponseDisplay';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function GuidanceScreen() {
-  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<GuidanceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const spinValue = useRef(new Animated.Value(0)).current;
 
-  const handleSubmit = async () => {
-    if (!query.trim()) {
-      Alert.alert('Error', 'Please enter a question');
-      return;
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.setValue(0);
     }
+  }, [loading]);
 
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const handleSubmit = async (query: string) => {
     setLoading(true);
     setError(null);
     setResponse(null);
 
     try {
       const result = await guidanceService.askGuidance({
-        query: query.trim(),
+        query: query,
         maxVerses: 5,
       });
-      setResponse(result);
+
+      if (result.success) {
+        setResponse(result);
+        // Scroll to response after a short delay to allow rendering
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        setError('Failed to get guidance. Please try again.');
+      }
     } catch (err: any) {
       console.error('Error fetching guidance:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to get guidance';
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to get guidance';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.label}>What guidance do you seek?</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ask your question here... (e.g., How can I find inner peace?)"
-          value={query}
-          onChangeText={setQuery}
-          multiline
-          numberOfLines={4}
-          editable={!loading}
-        />
-
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      <LinearGradient
+        colors={[gradients.serene[0], gradients.serene[1]] as any}
+        style={styles.container}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {loading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>Seek Guidance</Text>
-          )}
-        </TouchableOpacity>
+          {/* Main Content */}
+          <View style={styles.content}>
+            <GuidanceForm onSubmit={handleSubmit} isLoading={loading} />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+            {/* Loading State */}
+            {loading && (
+              <View style={styles.loadingCard}>
+                <View style={styles.loaderContainer}>
+                  <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                    <Loader2 size={48} color={colors.spiritual.blue.DEFAULT} />
+                  </Animated.View>
+                  <View style={styles.pulseDot} />
+                </View>
+                <Text style={styles.loadingTitle}>
+                  Consulting the wisdom of the Bhagavad Gita...
+                </Text>
+                <Text style={styles.loadingSubtitle}>
+                  This may take a few moments
+                </Text>
+              </View>
+            )}
 
-        {response && (
-          <View style={styles.responseContainer}>
-            <Text style={styles.responseTitle}>Spiritual Guidance</Text>
-            <Text style={styles.responseText}>{response.guidance}</Text>
+            {/* Error State */}
+            {error && !loading && (
+              <View style={styles.errorCard}>
+                <View style={styles.errorHeader}>
+                  <AlertCircle size={24} color="#dc2626" />
+                  <Text style={styles.errorTitle}>Unable to Provide Guidance</Text>
+                </View>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity
+                  onPress={() => setError(null)}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
-            {response.verses_referenced && response.verses_referenced.length > 0 && (
-              <View style={styles.versesContainer}>
-                <Text style={styles.versesTitle}>Referenced Verses</Text>
-                {response.verses_referenced.map((verse, index) => (
-                  <View key={index} style={styles.verseItem}>
-                    <Text style={styles.verseReference}>
-                      Bhagavad Gita {verse.reference}
-                    </Text>
-                    <Text style={styles.verseTranslation}>{verse.translation}</Text>
-                    {verse.purport && (
-                      <Text style={styles.versePurport}>{verse.purport}</Text>
-                    )}
-                  </View>
-                ))}
+            {/* Response Display */}
+            {response && !loading && (
+              <ResponseDisplay response={response} />
+            )}
+
+            {/* Footer Welcome (Only shown when no response) */}
+            {!response && !loading && !error && (
+              <View style={styles.welcomeFooter}>
+                <View style={styles.welcomeCard}>
+                  <Text style={styles.welcomeText}>
+                    🙏 Welcome to Sarthi - Your Spiritual Guide
+                  </Text>
+                  <Text style={styles.welcomeSubtext}>
+                    Powered by the Bhagavad Gita and AI • <Text style={styles.verseHighlight}>653 verses</Text> available
+                  </Text>
+                </View>
               </View>
             )}
           </View>
-        )}
-      </View>
-    </ScrollView>
+        </ScrollView>
+
+        {/* Floating Om Symbol */}
+        <View style={styles.floatingOm}>
+          <Text style={styles.omText}>ॐ</Text>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: gradients.serene[0],
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+  },
+  scrollContent: {
+    paddingVertical: spacing.xl,
+    flexGrow: 1,
   },
   content: {
-    padding: spacing.lg,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray[700],
-    marginBottom: spacing.sm,
-  },
-  input: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 8,
-    padding: spacing.md,
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    marginBottom: spacing.md,
-  },
-  button: {
-    backgroundColor: colors.primary[600],
-    padding: spacing.md,
-    borderRadius: 8,
     alignItems: 'center',
+  },
+  loadingCard: {
+    width: '90%',
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+    alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+  },
+  loaderContainer: {
+    position: 'relative',
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  buttonDisabled: {
+  spinner: {
+    // Rotation is handled by the component if it supports it, 
+    // but in RN we might need a custom animation. 
+    // For now we'll rely on it being present.
+  },
+  pulseDot: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    backgroundColor: colors.spiritual.gold.DEFAULT,
+    borderRadius: 12,
     opacity: 0.6,
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
+  loadingTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: colors.gray[700],
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
-  errorContainer: {
-    backgroundColor: '#fee2e2',
-    padding: spacing.md,
-    borderRadius: 8,
-    marginBottom: spacing.md,
+  loadingSubtitle: {
+    fontSize: 14,
+    color: colors.gray[500],
+  },
+  errorCard: {
+    width: '90%',
+    backgroundColor: '#fef2f2',
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  errorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#991b1b',
+    marginLeft: spacing.sm,
   },
   errorText: {
-    color: '#dc2626',
     fontSize: 14,
-  },
-  responseContainer: {
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    borderRadius: 8,
-    marginTop: spacing.md,
-  },
-  responseTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.gray[900],
+    color: '#b91c1c',
     marginBottom: spacing.md,
   },
-  responseText: {
+  retryButton: {
+    backgroundColor: '#dc2626',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+  welcomeFooter: {
+    marginTop: spacing.xxl,
+    width: '90%',
+  },
+  welcomeCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 16,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
+    alignItems: 'center',
+  },
+  welcomeText: {
     fontSize: 16,
     color: colors.gray[700],
-    lineHeight: 24,
-    marginBottom: spacing.lg,
-  },
-  versesContainer: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-  },
-  versesTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.gray[900],
-    marginBottom: spacing.md,
-  },
-  verseItem: {
-    marginBottom: spacing.lg,
-    padding: spacing.md,
-    backgroundColor: colors.gray[50],
-    borderRadius: 8,
-  },
-  verseReference: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.spiritual.blue.DEFAULT,
-    marginBottom: spacing.sm,
-  },
-  verseTranslation: {
-    fontSize: 15,
-    color: colors.gray[900],
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     fontWeight: '500',
   },
-  versePurport: {
-    fontSize: 14,
-    color: colors.gray[600],
-    lineHeight: 20,
+  welcomeSubtext: {
+    fontSize: 13,
+    color: colors.gray[500],
+  },
+  verseHighlight: {
+    color: colors.spiritual.blue.DEFAULT,
+    fontWeight: '600',
+  },
+  floatingOm: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    opacity: 0.1,
+  },
+  omText: {
+    fontSize: 80,
+    color: colors.spiritual.gold.DEFAULT,
   },
 });
-

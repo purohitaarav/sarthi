@@ -17,12 +17,11 @@ export interface GuidanceResponse {
 
 export type RootStackParamList = {
   Home: undefined;
-  Response: { response: GuidanceResponse };
-  History: undefined;
   Guidance: undefined;
+  About: undefined;
+  Response: { response: GuidanceResponse; query: string; askedAt: string };
+  History: undefined;
   Users: undefined;
   Reflections: undefined;
   Spiritual: undefined;
-  About: undefined;
 };
-

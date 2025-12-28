@@ -2,14 +2,12 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
+import { colors } from '../theme/colors';
+
 import HomeScreen from '../screens/HomeScreen';
-import ResponseScreen from '../screens/ResponseScreen';
-import HistoryScreen from '../screens/HistoryScreen';
 import GuidanceScreen from '../screens/GuidanceScreen';
-import UsersScreen from '../screens/UsersScreen';
-import ReflectionsScreen from '../screens/ReflectionsScreen';
-import SpiritualScreen from '../screens/SpiritualScreen';
 import AboutScreen from '../screens/AboutScreen';
+import ResponseScreen from '../screens/ResponseScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,56 +18,37 @@ export default function AppNavigator() {
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#0284c7',
+            backgroundColor: '#ffffff',
           },
-          headerTintColor: '#fff',
+          headerTintColor: colors.primary[600],
           headerTitleStyle: {
             fontWeight: 'bold',
+            fontSize: 18,
           },
+          headerShadowVisible: true,
         }}
       >
-        <Stack.Screen 
-          name="Home" 
+        <Stack.Screen
+          name="Home"
           component={HomeScreen}
           options={{ title: 'Sarthi' }}
         />
-        <Stack.Screen 
-          name="Response" 
-          component={ResponseScreen}
-          options={{ title: 'Guidance Response' }}
-        />
-        <Stack.Screen 
-          name="History" 
-          component={HistoryScreen}
-          options={{ title: 'Past Conversations' }}
-        />
-        <Stack.Screen 
-          name="Guidance" 
+        <Stack.Screen
+          name="Guidance"
           component={GuidanceScreen}
           options={{ title: 'AI Guidance' }}
         />
-        <Stack.Screen 
-          name="Users" 
-          component={UsersScreen}
-          options={{ title: 'Users' }}
-        />
-        <Stack.Screen 
-          name="Reflections" 
-          component={ReflectionsScreen}
-          options={{ title: 'Reflections' }}
-        />
-        <Stack.Screen 
-          name="Spiritual" 
-          component={SpiritualScreen}
-          options={{ title: 'Spiritual Guidance' }}
-        />
-        <Stack.Screen 
-          name="About" 
+        <Stack.Screen
+          name="About"
           component={AboutScreen}
-          options={{ title: 'About' }}
+          options={{ title: 'About Sarthi' }}
+        />
+        <Stack.Screen
+          name="Response"
+          component={ResponseScreen}
+          options={{ title: 'Guidance Response' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-

@@ -23,6 +23,14 @@ export const colors = {
       DEFAULT: '#f59e0b',
       dark: '#d97706',
     },
+    lotus: {
+      pink: '#f9a8d4',
+      purple: '#c084fc',
+    },
+    sacred: {
+      saffron: '#fb923c',
+      cream: '#fef3c7',
+    }
   },
   gray: {
     50: '#f9fafb',
@@ -38,5 +46,11 @@ export const colors = {
   },
   white: '#ffffff',
   black: '#000000',
+};
+
+export const gradients = {
+  spiritual: ['#3b82f6', '#f59e0b'],
+  serene: ['#dbeafe', '#fef3c7'],
+  divine: ['#60a5fa', '#fbbf24', '#f9a8d4'],
 };
 

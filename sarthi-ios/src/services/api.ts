@@ -1,39 +1,54 @@
 import axios from 'axios';
+import { useState, useCallback } from 'react';
 
-// API Configuration - points to existing Render API
-const API_BASE_URL = 'https://sarthiai.onrender.com';
+const API_URL = 'https://sarthiai.onrender.com/api';
 
+// Shared axios instance used across services
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 180000, // 3 minutes for AI responses
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    // TODO: Implement secure storage for tokens
-    return config;
+export const guidanceApi = {
+  async ask(query: string) {
+    const response = await api.post('/guidance/ask', {
+      query,
+      maxVerses: 5,
+    });
+    return response.data;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+};
 
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      // TODO: Implement logout/navigation
+export function useGuidanceApi() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [response, setResponse] = useState<any>(null);
+
+  const ask = useCallback(async (query: string) => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+    try {
+      const result = await guidanceApi.ask(query);
+      setResponse(result);
+      return result;
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to get guidance.'
+      );
+      throw err;
+    } finally {
+      setLoading(false);
     }
-    return Promise.reject(error);
-  }
-);
+  }, []);
 
+  return { loading, error, response, ask };
+}
+
+// Default export used by guidanceService and other API callers
 export default api;
-

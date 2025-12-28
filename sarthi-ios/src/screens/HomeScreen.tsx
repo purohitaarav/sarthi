@@ -1,442 +1,236 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RootStackParamList, GuidanceResponse } from '../types';
-import { guidanceService } from '../services/guidanceService';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
+import { Zap, Users, Settings, BookOpen, ArrowRight } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { LinearGradient } from 'expo-linear-gradient';
 
-type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-
-interface Props {
-  navigation: HomeScreenNavigationProp;
-}
-
-interface PastQuery {
-  query: string;
-  timestamp: string;
-  response?: GuidanceResponse;
-}
-
-export default function HomeScreen({ navigation }: Props) {
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pastQueries, setPastQueries] = useState<PastQuery[]>([]);
-
-  const STORAGE_KEY = '@sarthi_past_queries';
-
-  useEffect(() => {
-    loadPastQueries();
-  }, []);
-
-  const loadPastQueries = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setPastQueries(JSON.parse(stored));
-      }
-    } catch (err) {
-      console.error('Error loading past queries:', err);
-    }
-  };
-
-  const savePastQuery = async (query: string, response: GuidanceResponse) => {
-    try {
-      const newQuery: PastQuery = {
-        query,
-        timestamp: new Date().toISOString(),
-        response,
-      };
-      const updated = [newQuery, ...pastQueries].slice(0, 10); // Keep last 10
-      setPastQueries(updated);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (err) {
-      console.error('Error saving past query:', err);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!query.trim()) {
-      Alert.alert('Error', 'Please enter a question');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const requestQuery = query.trim();
-    const startTime = Date.now();
-
-    try {
-      const result = await guidanceService.askGuidance({
-        query: requestQuery,
-        maxVerses: 5,
-      });
-
-      await savePastQuery(requestQuery, result);
-
-      // Navigate to response screen with the result
-      navigation.navigate('Response', { response: result });
-    } catch (err: any) {
-      const duration = Date.now() - startTime;
-      console.error('Error fetching guidance:', err);
-      console.error('Request duration:', duration, 'ms');
-
-      let errorMessage = 'Failed to get guidance. Please try again.';
-
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        errorMessage = 'Request timed out. The AI service is taking longer than expected. Please try again with a simpler query.';
-      } else if (err.response?.status === 500) {
-        const errorData = err.response?.data;
-        if (errorData?.error?.includes('no such table') || errorData?.error?.includes('SQLITE_ERROR')) {
-          errorMessage = 'The server database is not fully set up. Please contact the administrator.';
-        } else if (errorData?.error) {
-          errorMessage = `Server error: ${errorData.error}. Please try again later.`;
-        } else {
-          errorMessage = 'The server encountered an error. Please try again later.';
-        }
-      } else if (err.response?.status === 503) {
-        errorMessage = 'AI service is currently unavailable. Please try again later.';
-      } else if (err.response?.status === 404) {
-        errorMessage = 'No relevant verses found for your query. Try different keywords.';
-      } else if (err.response?.status === 504) {
-        errorMessage = 'The server took too long to respond. Please try again.';
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      }
-
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sampleQueries = [
-    "How can I find inner peace?",
-    "What is my dharma?",
-    "How to deal with anxiety?",
-    "How to overcome fear?",
-    "What does the Gita say about karma?",
+export default function HomeScreen({ navigation }: any) {
+  const benefits = [
+    {
+      icon: Zap,
+      title: 'Simple & Intuitive',
+      description: 'Designed with a clean interface that makes managing your tasks a breeze',
+      color: '#2563eb',
+      bg: '#eff6ff',
+    },
+    {
+      icon: Users,
+      title: 'Collaborate with Ease',
+      description: 'Work together with your team in real-time',
+      color: '#16a34a',
+      bg: '#f0fdf4',
+    },
+    {
+      icon: Settings,
+      title: 'Customizable',
+      description: 'Tailor the experience to fit your specific needs',
+      color: '#9333ea',
+      bg: '#faf5ff',
+    },
   ];
 
-  const handleSampleClick = (sample: string) => {
-    setQuery(sample);
-  };
-
-  const handlePastQueryClick = (pastQuery: PastQuery) => {
-    if (pastQuery.response) {
-      navigation.navigate('Response', { response: pastQuery.response });
-    }
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>AI Spiritual Guidance</Text>
-          <Text style={styles.headerSubtitle}>
-            Seek wisdom from the Bhagavad Gita with AI-powered guidance
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Hero Section */}
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Welcome to Sarthi</Text>
+          <Text style={styles.heroSubtitle}>
+            Your personal guide to getting things done, staying organized, and achieving more every day
           </Text>
-        </View>
 
-        {/* Form */}
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>What guidance do you seek?</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ask your question here... (e.g., How can I find inner peace?)"
-            value={query}
-            onChangeText={setQuery}
-            multiline
-            numberOfLines={4}
-            editable={!loading}
-            placeholderTextColor={colors.gray[400]}
-          />
-
-          <TouchableOpacity
-            style={[styles.submitButton, (loading || !query.trim()) && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading || !query.trim()}
-          >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.white} size="small" />
-                <Text style={styles.submitButtonText}>Seeking Wisdom...</Text>
-              </View>
-            ) : (
-              <Text style={styles.submitButtonText}>Seek Guidance</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Sample Queries */}
-        <View style={styles.samplesContainer}>
-          <Text style={styles.samplesLabel}>Try asking:</Text>
-          <View style={styles.samplesGrid}>
-            {sampleQueries.map((sample, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.sampleButton, loading && styles.sampleButtonDisabled]}
-                onPress={() => handleSampleClick(sample)}
-                disabled={loading}
-              >
-                <Text style={styles.sampleButtonText}>{sample}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Error Display */}
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Unable to Provide Guidance</Text>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.heroButtons}>
             <TouchableOpacity
-              style={styles.errorButton}
-              onPress={() => setError(null)}
+              style={styles.primaryButton}
+              onPress={() => navigation.navigate('Guidance')}
             >
-              <Text style={styles.errorButtonText}>Try Again</Text>
+              <Text style={styles.primaryButtonText}>Get Started</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation.navigate('About')}
+            >
+              <Text style={styles.secondaryButtonText}>Learn More</Text>
             </TouchableOpacity>
           </View>
-        )}
+        </View>
 
-        {/* Past Queries */}
-        {pastQueries.length > 0 && (
-          <View style={styles.pastQueriesContainer}>
-            <View style={styles.pastQueriesHeader}>
-              <Text style={styles.pastQueriesTitle}>Recent Queries</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('History')}>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
+        {/* Benefits Section */}
+        <View style={styles.benefitsGrid}>
+          {benefits.map((benefit, index) => (
+            <View key={index} style={styles.benefitCard}>
+              <View style={[styles.iconContainer, { backgroundColor: benefit.bg }]}>
+                <benefit.icon size={32} color={benefit.color} />
+              </View>
+              <Text style={styles.benefitTitle}>{benefit.title}</Text>
+              <Text style={styles.benefitDescription}>{benefit.description}</Text>
             </View>
-            {pastQueries.slice(0, 3).map((pastQuery, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.pastQueryItem}
-                onPress={() => handlePastQueryClick(pastQuery)}
-              >
-                <Text style={styles.pastQueryText} numberOfLines={2}>
-                  {pastQuery.query}
-                </Text>
-                <Text style={styles.pastQueryTime}>
-                  {new Date(pastQuery.timestamp).toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+          ))}
+        </View>
 
-        {/* Footer Info */}
-        {!error && pastQueries.length === 0 && (
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>
-              🙏 Welcome to Sarthi - Your Spiritual Guide
-            </Text>
-            <Text style={styles.footerSubtext}>
-              Powered by the Bhagavad Gita and AI • 653 verses available
-            </Text>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+        {/* Call to Action */}
+        <LinearGradient
+          colors={['#f0f9ff', '#eff6ff']}
+          style={styles.cta}
+        >
+          <BookOpen size={48} color={colors.primary[600]} style={styles.ctaIcon} />
+          <Text style={styles.ctaTitle}>Ready to get started?</Text>
+          <Text style={styles.ctaSubtitle}>
+            Join thousands of users who are already simplifying their workflow with Sarthi
+          </Text>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={() => navigation.navigate('Guidance')}
+          >
+            <Text style={styles.ctaButtonText}>Seek Guidance</Text>
+            <ArrowRight size={20} color={colors.white} style={styles.ctaArrow} />
+          </TouchableOpacity>
+        </LinearGradient>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#dbeafe', // gradient-serene background
+    backgroundColor: colors.white,
   },
-  content: {
-    padding: spacing.lg,
+  scrollContent: {
+    paddingBottom: spacing.xxl,
   },
-  header: {
+  hero: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xxl,
     alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.gray[900],
-    marginBottom: spacing.sm,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: colors.gray[600],
     textAlign: 'center',
   },
-  formContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  heroTitle: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: colors.gray[900],
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray[700],
-    marginBottom: spacing.sm,
+  heroSubtitle: {
+    fontSize: 18,
+    color: colors.gray[600],
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: 26,
   },
-  input: {
+  heroButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  primaryButton: {
+    backgroundColor: colors.primary[600],
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+  },
+  primaryButtonText: {
+    color: colors.white,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  secondaryButton: {
     borderWidth: 1,
     borderColor: colors.gray[300],
-    borderRadius: 8,
-    padding: spacing.md,
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    marginBottom: spacing.md,
-    color: colors.gray[800],
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
   },
-  submitButton: {
-    backgroundColor: colors.primary[600],
-    padding: spacing.md,
-    borderRadius: 8,
+  secondaryButtonText: {
+    color: colors.gray[700],
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  benefitsGrid: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.lg,
+    marginBottom: spacing.xxl,
+  },
+  benefitCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    marginBottom: spacing.md,
   },
-  submitButtonDisabled: {
-    opacity: 0.5,
+  benefitTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.gray[900],
+    marginBottom: spacing.sm,
   },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  submitButtonText: {
-    color: colors.white,
+  benefitDescription: {
     fontSize: 16,
-    fontWeight: '600',
-  },
-  samplesContainer: {
-    marginBottom: spacing.lg,
-  },
-  samplesLabel: {
-    fontSize: 14,
     color: colors.gray[600],
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    lineHeight: 22,
   },
-  samplesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  sampleButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.white,
+  cta: {
+    marginHorizontal: spacing.lg,
+    padding: spacing.xxl,
+    borderRadius: 24,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.spiritual.blue.DEFAULT + '4D', // 30% opacity
-    borderRadius: 20,
+    borderColor: colors.primary[100],
   },
-  sampleButtonDisabled: {
-    opacity: 0.5,
-  },
-  sampleButtonText: {
-    fontSize: 14,
-    color: colors.spiritual.blue.DEFAULT,
-  },
-  errorContainer: {
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 12,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#991b1b',
-    marginBottom: spacing.sm,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#dc2626',
+  ctaIcon: {
     marginBottom: spacing.md,
   },
-  errorButton: {
-    backgroundColor: '#dc2626',
-    padding: spacing.sm,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  errorButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pastQueriesContainer: {
-    marginTop: spacing.lg,
-  },
-  pastQueriesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  pastQueriesTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  ctaTitle: {
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.gray[900],
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: colors.primary[600],
-    fontWeight: '500',
-  },
-  pastQueryItem: {
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: 8,
     marginBottom: spacing.sm,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    textAlign: 'center',
   },
-  pastQueryText: {
-    fontSize: 15,
-    color: colors.gray[900],
-    marginBottom: spacing.xs,
-  },
-  pastQueryTime: {
-    fontSize: 12,
-    color: colors.gray[500],
-  },
-  footerContainer: {
-    backgroundColor: colors.white + '80', // 50% opacity
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.spiritual.blue.DEFAULT + '33', // 20% opacity
-  },
-  footerText: {
+  ctaSubtitle: {
     fontSize: 16,
     color: colors.gray[600],
-    marginBottom: spacing.xs,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: 22,
   },
-  footerSubtext: {
-    fontSize: 12,
-    color: colors.gray[500],
+  ctaButton: {
+    backgroundColor: colors.primary[600],
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    borderRadius: 14,
+  },
+  ctaButtonText: {
+    color: colors.white,
+    fontWeight: '700',
+    fontSize: 18,
+  },
+  ctaArrow: {
+    marginLeft: spacing.sm,
   },
 });
