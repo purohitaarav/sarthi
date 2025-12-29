@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList, GuidanceResponse } from '../types';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { LinearGradient } from 'expo-linear-gradient';
+import { History, Trash2, ChevronRight, Sparkles } from 'lucide-react-native';
 
 type HistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'History'>;
 
@@ -22,11 +25,14 @@ export default function HistoryScreen({ navigation }: Props) {
   const [pastQueries, setPastQueries] = useState<PastQuery[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isFocused = useIsFocused();
   const STORAGE_KEY = '@sarthi_past_queries';
 
   useEffect(() => {
-    loadPastQueries();
-  }, []);
+    if (isFocused) {
+      loadPastQueries();
+    }
+  }, [isFocused]);
 
   const loadPastQueries = async () => {
     try {
@@ -67,221 +73,218 @@ export default function HistoryScreen({ navigation }: Props) {
 
   const handleQueryPress = (pastQuery: PastQuery) => {
     if (pastQuery.response) {
-      navigation.navigate('Response', {
-        response: pastQuery.response,
-        query: pastQuery.query,
-        askedAt: pastQuery.timestamp,
+      // Navigate to the Response screen nested within HomeMain stack
+      navigation.navigate('HomeMain' as any, {
+        screen: 'Response',
+        params: {
+          response: pastQuery.response.guidance,
+          query: pastQuery.query,
+          verses: pastQuery.response.verses_referenced || [],
+          timestamp: pastQuery.timestamp,
+        }
       });
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading history...</Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Past Conversations</Text>
-          {pastQueries.length > 0 && (
-            <TouchableOpacity onPress={clearHistory}>
-              <Text style={styles.clearButton}>Clear All</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {pastQueries.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No past queries yet</Text>
-            <Text style={styles.emptySubtext}>
-              Your previous questions and guidance will appear here
-            </Text>
-            <TouchableOpacity
-              style={styles.askButton}
-              onPress={() => navigation.navigate('Home')}
-            >
-              <Text style={styles.askButtonText}>Ask a Question</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.queriesList}>
-            {pastQueries.map((pastQuery, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.queryCard}
-                onPress={() => handleQueryPress(pastQuery)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.queryCardHeader}>
-                  <View style={styles.queryIcon}>
-                    <Text style={styles.queryIconText}>🙏</Text>
-                  </View>
-                  <View style={styles.queryContent}>
-                    <Text style={styles.queryText} numberOfLines={2}>
-                      {pastQuery.query}
-                    </Text>
-                    <Text style={styles.queryTime}>
-                      {new Date(pastQuery.timestamp).toLocaleString()}
-                    </Text>
-                  </View>
-                  <Text style={styles.chevron}>›</Text>
-                </View>
-                {pastQuery.response && (
-                  <View style={styles.responsePreview}>
-                    <Text style={styles.responsePreviewText} numberOfLines={2}>
-                      {pastQuery.response.guidance}
-                    </Text>
-                    {pastQuery.response.verses_referenced &&
-                      pastQuery.response.verses_referenced.length > 0 && (
-                        <Text style={styles.versesCount}>
-                          {pastQuery.response.verses_referenced.length} verse
-                          {pastQuery.response.verses_referenced.length !== 1 ? 's' : ''} referenced
-                        </Text>
-                      )}
-                  </View>
-                )}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#dbeafe', '#fef3c7']}
+        style={styles.background}
+      >
+        <View style={styles.safeArea}>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerSubtitle}>Revisit the wisdom shared with you</Text>
+            {pastQueries.length > 0 && (
+              <TouchableOpacity onPress={clearHistory} style={styles.clearIconButton}>
+                <Trash2 size={20} color="#dc2626" />
               </TouchableOpacity>
-            ))}
+            )}
           </View>
-        )}
-      </View>
-    </ScrollView>
+
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {loading ? (
+              <View style={styles.centerContainer}>
+                <Text style={styles.infoText}>Loading history...</Text>
+              </View>
+            ) : pastQueries.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <History size={64} color={colors.gray[300]} />
+                <Text style={styles.emptyText}>No past queries yet</Text>
+                <Text style={styles.emptySubtext}>
+                  Your previous questions and guidance will appear here
+                </Text>
+                <TouchableOpacity
+                  style={styles.askButton}
+                  onPress={() => navigation.navigate('Home' as any)}
+                >
+                  <Text style={styles.askButtonText}>Ask a Question</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.queriesList}>
+                {pastQueries.map((pastQuery, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.queryCard}
+                    onPress={() => handleQueryPress(pastQuery)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.queryCardHeader}>
+                      <View style={styles.queryIcon}>
+                        <Sparkles size={20} color={colors.spiritual.gold.DEFAULT} />
+                      </View>
+                      <View style={styles.queryContent}>
+                        <Text style={styles.queryText} numberOfLines={2}>
+                          {pastQuery.query}
+                        </Text>
+                        <Text style={styles.queryTime}>
+                          {new Date(pastQuery.timestamp).toLocaleDateString()} at {new Date(pastQuery.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </View>
+                      <ChevronRight size={20} color={colors.gray[300]} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Floating Om Symbol */}
+          <View style={styles.omContainer} pointerEvents="none">
+            <Text style={styles.omSymbol}>ॐ</Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
-  content: {
-    padding: spacing.lg,
+  background: {
+    flex: 1,
   },
-  loadingContainer: {
+  safeArea: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.gray[500],
+  },
+  clearIconButton: {
+    padding: spacing.sm,
+    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    borderRadius: 12,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xxl,
+    flexGrow: 1,
+  },
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  infoText: {
     fontSize: 16,
     color: colors.gray[600],
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.gray[900],
-  },
-  clearButton: {
-    fontSize: 14,
-    color: '#dc2626',
-    fontWeight: '500',
-  },
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: 100,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.gray[700],
-    marginBottom: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.gray[500],
     textAlign: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.xxl,
   },
   askButton: {
-    backgroundColor: colors.primary[600],
-    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.spiritual.blue.DEFAULT,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
+    shadowColor: colors.spiritual.blue.DEFAULT,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   askButtonText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   queriesList: {
     gap: spacing.md,
   },
   queryCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: colors.black,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 20,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 1)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 2,
   },
   queryCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
   },
   queryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.spiritual.gold.DEFAULT + '20',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
-  },
-  queryIconText: {
-    fontSize: 20,
   },
   queryContent: {
     flex: 1,
   },
   queryText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: colors.gray[900],
-    marginBottom: spacing.xs,
+    fontWeight: '600',
+    color: colors.gray[800],
+    marginBottom: 4,
   },
   queryTime: {
     fontSize: 12,
-    color: colors.gray[500],
-  },
-  chevron: {
-    fontSize: 24,
     color: colors.gray[400],
-    marginLeft: spacing.sm,
   },
-  responsePreview: {
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+  omContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    opacity: 0.05,
   },
-  responsePreviewText: {
-    fontSize: 14,
-    color: colors.gray[600],
-    lineHeight: 20,
-    marginBottom: spacing.xs,
-  },
-  versesCount: {
-    fontSize: 12,
-    color: colors.spiritual.blue.DEFAULT,
-    fontWeight: '500',
+  omSymbol: {
+    fontSize: 120,
+    color: colors.spiritual.gold.DEFAULT,
   },
 });
-

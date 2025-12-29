@@ -45,7 +45,7 @@ const GuidanceForm = ({ onSubmit, isLoading }) => {
           {/* Textarea */}
           <div className="mb-6">
             <label htmlFor="query" className="block text-sm font-medium text-gray-700 mb-2">
-              What guidance do you seek?
+              Explain your question or difficulty
             </label>
             <textarea
               id="query"

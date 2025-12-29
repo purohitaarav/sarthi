@@ -1,154 +1,109 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
-    Animated,
-    Easing,
-    Dimensions,
+    ScrollView,
 } from 'react-native';
-import {
-    BookOpen,
-    Sparkles,
-    Quote,
-    ChevronDown,
-    ChevronUp,
-} from 'lucide-react-native';
+import { BookOpen, Sparkles, Quote, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GuidanceResponse } from '../types';
 
-const { width } = Dimensions.get('window');
+interface VerseReference {
+    reference: string;
+    translation: string;
+    purport?: string;
+}
 
 interface ResponseDisplayProps {
-    response: GuidanceResponse;
+    response: {
+        query: string;
+        guidance: string;
+        verses_referenced: VerseReference[];
+        timestamp: string;
+    };
 }
 
 const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
     const [expandedVerses, setExpandedVerses] = useState<Record<number, boolean>>({});
-    const animations = useRef<Record<number, Animated.Value>>({}).current;
+
+    const toggleVerse = (index: number) => {
+        setExpandedVerses(prev => ({ ...prev, [index]: !prev[index] }));
+    };
 
     if (!response) return null;
 
     const { query, guidance, verses_referenced, timestamp } = response;
 
-    const toggleVerse = (index: number) => {
-        if (!animations[index]) {
-            animations[index] = new Animated.Value(0);
-        }
-
-        const isExpanding = !expandedVerses[index];
-
-        Animated.timing(animations[index], {
-            toValue: isExpanding ? 1 : 0,
-            duration: 300,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: false,
-        }).start();
-
-        setExpandedVerses((prev) => ({
-            ...prev,
-            [index]: !prev[index],
-        }));
-    };
-
-    const getAnimatedStyle = (index: number) => {
-        if (!animations[index]) {
-            animations[index] = new Animated.Value(0);
-        }
-
-        const opacity = animations[index].interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1],
-        });
-
-        const translateY = animations[index].interpolate({
-            inputRange: [0, 1],
-            outputRange: [-10, 0],
-        });
-
-        return {
-            opacity,
-            transform: [{ translateY }],
-            display: expandedVerses[index] ? 'flex' as const : 'none' as const,
-        };
-    };
-
     return (
         <View style={styles.container}>
-            {/* Query Display */}
+            {/* Query */}
             <LinearGradient
-                colors={[colors.spiritual.blue.light + '20', colors.spiritual.gold.light + '20']}
+                colors={['rgba(59, 130, 246, 0.1)', 'rgba(245, 158, 11, 0.1)']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.queryCard}
+                style={styles.queryContainer}
             >
-                <View style={styles.queryContent}>
-                    <Quote size={20} color={colors.spiritual.blue.DEFAULT} style={styles.quoteIcon} />
-                    <View style={styles.flex1}>
+                <View style={styles.queryHeader}>
+                    <Quote size={20} color={colors.spiritual.blue.DEFAULT} />
+                    <View style={styles.queryContent}>
                         <Text style={styles.queryLabel}>Your Question:</Text>
                         <Text style={styles.queryText}>{query}</Text>
                     </View>
                 </View>
             </LinearGradient>
 
-            {/* Guidance Response */}
+            {/* Guidance */}
             <View style={styles.guidanceCard}>
                 <View style={styles.cardHeader}>
                     <Sparkles size={24} color={colors.spiritual.gold.DEFAULT} />
                     <Text style={styles.cardTitle}>Spiritual Guidance</Text>
                 </View>
-
                 <Text style={styles.guidanceText}>{guidance}</Text>
-
-                <View style={styles.footer}>
-                    <Text style={styles.timestamp}>
-                        Received: {new Date(timestamp).toLocaleString()}
-                    </Text>
-                </View>
+                <View style={styles.footerLine} />
+                <Text style={styles.timestampText}>
+                    Received: {new Date(timestamp).toLocaleString()}
+                </Text>
             </View>
 
-            {/* Referenced Verses */}
-            {verses_referenced && verses_referenced.length > 0 && (
-                <LinearGradient
-                    colors={['#f3e8ff', '#ede9fe', '#ffffff']}
-                    style={styles.versesSection}
-                >
-                    <View style={styles.cardHeader}>
+            {/* Verses */}
+            {verses_referenced?.length > 0 && (
+                <View style={styles.versesSection}>
+                    <View style={styles.versesHeader}>
                         <BookOpen size={24} color={colors.spiritual.blue.DEFAULT} />
-                        <Text style={styles.cardTitle}>Referenced Verses</Text>
+                        <Text style={styles.versesTitle}>Referenced Verses</Text>
                     </View>
 
                     <View style={styles.versesList}>
                         {verses_referenced.map((verse, index) => (
                             <TouchableOpacity
                                 key={index}
-                                activeOpacity={0.9}
+                                activeOpacity={0.7}
                                 onPress={() => toggleVerse(index)}
-                                style={styles.verseItem}
+                                style={styles.verseCard}
                             >
                                 <View style={styles.verseHeader}>
                                     <Text style={styles.verseReference}>
                                         Bhagavad Gita {verse.reference}
                                     </Text>
-                                    {expandedVerses[index] ? (
-                                        <ChevronUp size={20} color={colors.gray[400]} />
-                                    ) : (
+                                    {expandedVerses[index] ?
+                                        <ChevronUp size={20} color={colors.gray[400]} /> :
                                         <ChevronDown size={20} color={colors.gray[400]} />
-                                    )}
+                                    }
                                 </View>
-
                                 <Text style={styles.verseTranslation}>{verse.translation}</Text>
-
-                                <Animated.View style={[styles.versePurportContainer, getAnimatedStyle(index)]}>
-                                    <Text style={styles.versePurport}>{verse.purport || 'No purport available.'}</Text>
-                                </Animated.View>
+                                {expandedVerses[index] && verse.purport && (
+                                    <View style={styles.purportContainer}>
+                                        <Text style={styles.purportLabel}>Purport:</Text>
+                                        <Text style={styles.purportText}>{verse.purport}</Text>
+                                    </View>
+                                )}
                             </TouchableOpacity>
                         ))}
                     </View>
-                </LinearGradient>
+                </View>
             )}
         </View>
     );
@@ -157,123 +112,136 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginTop: spacing.xl,
         paddingHorizontal: spacing.md,
-        paddingBottom: spacing.xxl,
+        marginTop: spacing.xl,
     },
-    flex1: {
-        flex: 1,
-    },
-    queryCard: {
+    queryContainer: {
         borderRadius: 16,
         padding: spacing.lg,
-        marginBottom: spacing.lg,
         borderWidth: 1,
-        borderColor: colors.spiritual.blue.light + '30',
+        borderColor: 'rgba(59, 130, 246, 0.2)',
+        marginBottom: spacing.lg,
     },
-    queryContent: {
+    queryHeader: {
         flexDirection: 'row',
         alignItems: 'flex-start',
+        gap: spacing.sm,
     },
-    quoteIcon: {
-        marginRight: spacing.sm,
-        marginTop: 2,
+    queryContent: {
+        flex: 1,
     },
     queryLabel: {
         fontSize: 12,
-        color: colors.gray[500],
+        color: colors.gray[600],
         marginBottom: 2,
     },
     queryText: {
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: '600',
         color: colors.gray[800],
     },
     guidanceCard: {
         backgroundColor: colors.white,
-        borderRadius: 20,
-        padding: spacing.lg,
-        marginBottom: spacing.lg,
+        borderRadius: 24,
+        padding: spacing.xl,
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 5,
         borderWidth: 1,
         borderColor: colors.gray[100],
+        marginBottom: spacing.lg,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginBottom: spacing.md,
+    },
+    cardTitle: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: colors.gray[900],
+    },
+    guidanceText: {
+        fontSize: 17,
+        lineHeight: 26,
+        color: colors.gray[700],
+    },
+    footerLine: {
+        height: 1,
+        backgroundColor: colors.gray[100],
+        marginTop: spacing.xl,
+        marginBottom: spacing.sm,
+    },
+    timestampText: {
+        fontSize: 12,
+        color: colors.gray[400],
+    },
+    versesSection: {
+        backgroundColor: 'rgba(237, 233, 254, 0.3)',
+        borderRadius: 24,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: 'rgba(139, 92, 246, 0.1)',
+        marginBottom: spacing.xl,
+    },
+    versesHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginBottom: spacing.lg,
+    },
+    versesTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: colors.gray[900],
+    },
+    versesList: {
+        gap: spacing.md,
+    },
+    verseCard: {
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        padding: spacing.lg,
         shadowColor: colors.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 2,
     },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.md,
-    },
-    cardTitle: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: colors.gray[800],
-        marginLeft: spacing.sm,
-    },
-    guidanceText: {
-        fontSize: 16,
-        color: colors.gray[700],
-        lineHeight: 24,
-    },
-    footer: {
-        marginTop: spacing.lg,
-        paddingTop: spacing.md,
-        borderTopWidth: 1,
-        borderTopColor: colors.gray[100],
-    },
-    timestamp: {
-        fontSize: 12,
-        color: colors.gray[400],
-    },
-    versesSection: {
-        borderRadius: 20,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.gray[200],
-    },
-    versesList: {
-        marginTop: spacing.sm,
-    },
-    verseItem: {
-        backgroundColor: colors.white,
-        borderRadius: 12,
-        padding: spacing.md,
-        marginBottom: spacing.md,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
-    },
     verseHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.xs,
+        marginBottom: spacing.sm,
     },
     verseReference: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '700',
         color: colors.spiritual.blue.DEFAULT,
     },
     verseTranslation: {
-        fontSize: 15,
-        color: colors.gray[700],
+        fontSize: 16,
+        color: colors.gray[800],
         lineHeight: 22,
     },
-    versePurportContainer: {
-        marginTop: spacing.sm,
-        paddingTop: spacing.sm,
+    purportContainer: {
+        marginTop: spacing.md,
+        paddingTop: spacing.md,
         borderTopWidth: 1,
         borderTopColor: colors.gray[100],
     },
-    versePurport: {
+    purportLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: colors.gray[700],
+        marginBottom: 4,
+    },
+    purportText: {
         fontSize: 14,
         color: colors.gray[600],
-        fontStyle: 'italic',
         lineHeight: 20,
     },
 });

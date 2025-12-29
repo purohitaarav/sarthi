@@ -5,7 +5,6 @@ import {
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    ScrollView,
     Dimensions,
 } from 'react-native';
 import { Send, Sparkles } from 'lucide-react-native';
@@ -57,7 +56,7 @@ const GuidanceForm: React.FC<GuidanceFormProps> = ({ onSubmit, isLoading }) => {
 
             {/* Main Form */}
             <View style={styles.formCard}>
-                <Text style={styles.label}>What guidance do you seek?</Text>
+                <Text style={styles.label}>Explain your question or difficulty</Text>
                 <TextInput
                     style={styles.input}
                     value={query}
@@ -141,15 +140,15 @@ const styles = StyleSheet.create({
     },
     formCard: {
         backgroundColor: colors.white,
-        borderRadius: 20,
+        borderRadius: 24,
         padding: spacing.lg,
         shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 5,
+        shadowOffset: { width: 0, height: 15 },
+        shadowOpacity: 0.15,
+        shadowRadius: 30,
+        elevation: 10,
         borderWidth: 1,
-        borderColor: colors.gray[100],
+        borderColor: 'rgba(255, 255, 255, 1)',
     },
     label: {
         fontSize: 14,
@@ -171,9 +170,14 @@ const styles = StyleSheet.create({
     },
     button: {
         borderRadius: 12,
-        paddingVertical: spacing.md,
+        paddingVertical: spacing.lg,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: colors.spiritual.blue.DEFAULT,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     buttonDisabled: {
         opacity: 0.5,
@@ -208,9 +212,9 @@ const styles = StyleSheet.create({
     sampleButton: {
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        backgroundColor: colors.white,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
         borderWidth: 1,
-        borderColor: colors.spiritual.blue.light + '40',
+        borderColor: 'rgba(59, 130, 246, 0.2)',
         borderRadius: 20,
     },
     sampleButtonText: {
