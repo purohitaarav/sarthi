@@ -127,7 +127,7 @@ router.get('/health', async (req, res) => {
       status: isHealthy ? 'healthy' : 'unavailable',
       gemini_available: isHealthy,
       available_models: models.map(m => m.name),
-      current_model: 'gemini-2.5-flash'
+      current_model: 'gemini-2.0-flash'
     });
   } catch (error) {
     res.status(500).json({
@@ -143,7 +143,7 @@ router.get('/models', async (req, res) => {
     const models = await geminiService.listModels();
     res.json({
       models: models,
-      current_model: 'gemini-2.5-flash'
+      current_model: 'gemini-2.0-flash'
     });
   } catch (error) {
     res.status(500).json({

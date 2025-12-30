@@ -93,7 +93,7 @@ export default function SpiritualScreen() {
               <Text style={styles.title}>Spiritual Guidance</Text>
             </View>
             <Text style={styles.subtitle}>
-              Seek wisdom from the timeless teachings of the Bhagavad Gita
+              Seek timeless wisdom from the scriptures!
             </Text>
           </View>
 

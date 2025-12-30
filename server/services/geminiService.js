@@ -4,7 +4,7 @@ class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
     // Standard model names for Gemini 1.5
-    this.modelName = 'gemini-1.5-flash-latest';
+    this.modelName = 'gemini-2.0-flash';
     this.embeddingModelName = 'text-embedding-004';
     this.genAI = null;
 

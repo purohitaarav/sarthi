@@ -46,11 +46,11 @@ const GuidanceForm: React.FC<GuidanceFormProps> = ({ onSubmit, isLoading }) => {
             <View style={styles.header}>
                 <View style={styles.titleContainer}>
                     <Sparkles size={24} color={colors.spiritual.gold.DEFAULT} />
-                    <Text style={styles.title}>AI Spiritual Guidance</Text>
+                    <Text style={styles.title}>Spiritual Guidance</Text>
                     <Sparkles size={24} color={colors.spiritual.blue.DEFAULT} />
                 </View>
                 <Text style={styles.subtitle}>
-                    Seek wisdom from the Bhagavad Gita with AI-powered guidance
+                    Seek timeless wisdom from the scriptures!
                 </Text>
             </View>
 

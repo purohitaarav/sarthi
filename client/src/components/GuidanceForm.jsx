@@ -30,12 +30,12 @@ const GuidanceForm = ({ onSubmit, isLoading }) => {
         <div className="flex items-center justify-center mb-3">
           <Sparkles className="w-6 h-6 text-spiritual-gold animate-pulse-slow" />
           <h2 className="text-3xl md:text-4xl font-display font-bold bg-gradient-spiritual bg-clip-text text-transparent mx-3">
-            AI Spiritual Guidance
+            Spiritual Guidance
           </h2>
           <Sparkles className="w-6 h-6 text-spiritual-blue animate-pulse-slow" />
         </div>
         <p className="text-base text-gray-600 max-w-2xl mx-auto">
-          Seek wisdom from the Bhagavad Gita with AI-powered guidance
+          Seek timeless wisdom from the scriptures!
         </p>
       </div>
 

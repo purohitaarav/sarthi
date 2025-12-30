@@ -35,7 +35,7 @@ const SpiritualHome = () => {
           headers: API_CONFIG.headers
         }
       );
-      
+
       const duration = Date.now() - startTime;
       console.log('Request completed in:', duration, 'ms');
 
@@ -160,7 +160,7 @@ const SpiritualHome = () => {
           <div className="w-full max-w-4xl mx-auto mt-16 text-center animate-fade-in">
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 border border-spiritual-blue/20">
               <p className="text-gray-600 mb-2">
-                🙏 Welcome to Sarthi - Your Spiritual Guide
+                Spiritual guidance from timeless wisdom traditions
               </p>
               <p className="text-sm text-gray-500">
                 Powered by the Bhagavad Gita and AI • {' '}

@@ -6,21 +6,21 @@ const Home = () => {
   const benefits = [
     {
       icon: Zap,
-      title: 'Simple & Intuitive',
+      title: 'Ask a Question',
       description: 'Designed with a clean interface that makes managing your tasks a breeze',
       color: 'text-blue-600',
       bg: 'bg-blue-50',
     },
     {
       icon: Users,
-      title: 'Collaborate with Ease',
+      title: 'Choose a Wisdom Source',
       description: 'Work together with your team in real-time',
       color: 'text-green-600',
       bg: 'bg-green-50',
     },
     {
       icon: Settings,
-      title: 'Customizable',
+      title: 'Receive Passages and Explanations',
       description: 'Tailor the experience to fit your specific needs',
       color: 'text-purple-600',
       bg: 'bg-purple-50',
@@ -32,21 +32,21 @@ const Home = () => {
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-5xl font-bold text-gray-900 mb-6">
-          Welcome to Sarthi
+          Spiritual guidance from timeless wisdom traditions
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-          Your personal guide to getting things done, staying organized, and achieving more every day
+          Ask a question and receive passages and explanations grounded in sacred texts.
         </p>
-        
+
         <div className="flex justify-center gap-4">
           <Link
-            to="/get-started"
+            to="/guidance"
             className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
           >
-            Get Started
+            Begin Guidance
           </Link>
           <Link
-            to="/about"
+            to="/guidance"
             className="px-6 py-3 border border-gray-300 font-medium rounded-lg hover:bg-gray-50 transition-colors"
           >
             Learn More
