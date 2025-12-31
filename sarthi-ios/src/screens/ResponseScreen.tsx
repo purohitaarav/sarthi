@@ -24,10 +24,7 @@ export default function ResponseScreen({ route }: Props) {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#dbeafe', '#fef3c7']}
-        style={styles.background}
-      >
+      <View style={styles.content}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <ResponseDisplay
             response={{
@@ -43,7 +40,7 @@ export default function ResponseScreen({ route }: Props) {
         <View style={styles.omContainer} pointerEvents="none">
           <Text style={styles.omSymbol}>ॐ</Text>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -51,9 +48,9 @@ export default function ResponseScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.gray[50], // Consistent warm off-white
   },
-  background: {
+  content: {
     flex: 1,
   },
   scrollContent: {
@@ -67,6 +64,6 @@ const styles = StyleSheet.create({
   },
   omSymbol: {
     fontSize: 120,
-    color: colors.spiritual.gold.DEFAULT,
+    color: colors.gray[400], // Neutral gray
   },
 });

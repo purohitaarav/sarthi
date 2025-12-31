@@ -6,11 +6,11 @@ import {
     TextInput,
     TouchableOpacity,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
-import { Send, Sparkles } from 'lucide-react-native';
+import { Send } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -45,9 +45,7 @@ const GuidanceForm: React.FC<GuidanceFormProps> = ({ onSubmit, isLoading }) => {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.titleContainer}>
-                    <Sparkles size={24} color={colors.spiritual.gold.DEFAULT} />
                     <Text style={styles.title}>Spiritual Guidance</Text>
-                    <Sparkles size={24} color={colors.spiritual.blue.DEFAULT} />
                 </View>
                 <Text style={styles.subtitle}>
                     Seek timeless wisdom from the scriptures!
@@ -72,22 +70,19 @@ const GuidanceForm: React.FC<GuidanceFormProps> = ({ onSubmit, isLoading }) => {
                     onPress={handleSubmit}
                     disabled={isLoading || !query.trim()}
                     activeOpacity={0.8}
+                    style={[styles.button, (isLoading || !query.trim()) && styles.buttonDisabled]}
                 >
-                    <LinearGradient
-                        colors={[colors.spiritual.blue.DEFAULT, colors.spiritual.gold.DEFAULT]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.button, (isLoading || !query.trim()) && styles.buttonDisabled]}
-                    >
-                        {isLoading ? (
+                    {isLoading ? (
+                        <View style={styles.buttonContent}>
+                            <ActivityIndicator color={colors.white} style={styles.buttonIcon} />
                             <Text style={styles.buttonText}>Seeking Wisdom...</Text>
-                        ) : (
-                            <View style={styles.buttonContent}>
-                                <Send size={20} color={colors.white} style={styles.buttonIcon} />
-                                <Text style={styles.buttonText}>Seek Guidance</Text>
-                            </View>
-                        )}
-                    </LinearGradient>
+                        </View>
+                    ) : (
+                        <View style={styles.buttonContent}>
+                            <Send size={20} color={colors.white} style={styles.buttonIcon} />
+                            <Text style={styles.buttonText}>Seek Guidance</Text>
+                        </View>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -126,29 +121,30 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: colors.spiritual.blue.DEFAULT,
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.gray[800], // Dark gray title
         marginHorizontal: spacing.sm,
         textAlign: 'center',
+        letterSpacing: -0.5, // Modern tight tracking
     },
     subtitle: {
         fontSize: 16,
-        color: colors.gray[600],
+        color: colors.gray[500],
         textAlign: 'center',
         paddingHorizontal: spacing.lg,
     },
     formCard: {
         backgroundColor: colors.white,
-        borderRadius: 24,
+        borderRadius: 16,
         padding: spacing.lg,
         shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 15 },
-        shadowOpacity: 0.15,
-        shadowRadius: 30,
-        elevation: 10,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05, // Subtle shadow (Notion-like)
+        shadowRadius: 12,
+        elevation: 2,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 1)',
+        borderColor: colors.gray[200],
     },
     label: {
         fontSize: 14,
@@ -159,28 +155,31 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1,
         borderColor: colors.gray[200],
-        borderRadius: 12,
+        borderRadius: 8, // Slightly more squared
         padding: spacing.md,
         fontSize: 16,
         color: colors.gray[800],
         minHeight: 120,
         textAlignVertical: 'top',
         marginBottom: spacing.lg,
-        backgroundColor: colors.gray[50],
+        backgroundColor: colors.gray[50], // Very light bg
     },
     button: {
+        backgroundColor: colors.primary[600], // Slightly brighter Green
         borderRadius: 12,
         paddingVertical: spacing.lg,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: colors.spiritual.blue.DEFAULT,
+        shadowColor: colors.primary[600],
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 4,
     },
     buttonDisabled: {
-        opacity: 0.5,
+        opacity: 0.8,
+        backgroundColor: colors.primary[200], // Faded green instead of gray
+        shadowOpacity: 0,
     },
     buttonContent: {
         flexDirection: 'row',
@@ -191,8 +190,9 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: colors.white,
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '700',
+        letterSpacing: 0.5,
     },
     samplesContainer: {
         marginTop: spacing.xl,
@@ -200,27 +200,27 @@ const styles = StyleSheet.create({
     },
     samplesLabel: {
         fontSize: 14,
-        color: colors.gray[600],
+        color: colors.gray[500],
         marginBottom: spacing.sm,
     },
     samplesList: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
+        flexDirection: 'column',
         justifyContent: 'center',
+        alignItems: 'center',
         gap: spacing.sm,
     },
     sampleButton: {
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backgroundColor: colors.primary[50], // Minty green background
         borderWidth: 1,
-        borderColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: colors.primary[200], // Soft green border
         borderRadius: 20,
     },
     sampleButtonText: {
         fontSize: 13,
-        color: colors.spiritual.blue.DEFAULT,
-        fontWeight: '500',
+        color: colors.primary[700], // Green text
+        fontWeight: '600',
     },
 });
 

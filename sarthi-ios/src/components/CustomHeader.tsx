@@ -17,7 +17,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title }) => {
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
-                        <Menu size={24} color={colors.spiritual.blue.DEFAULT} />
+                        <Menu size={24} color={colors.gray[700]} />
                     </TouchableOpacity>
                     <Text style={styles.title}>{title}</Text>
                     <View style={styles.placeholder} />

@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList, GuidanceResponse } from '../types';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { LinearGradient } from 'expo-linear-gradient';
 import { History, Trash2, ChevronRight, Sparkles } from 'lucide-react-native';
 
 type HistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'History'>;
@@ -88,74 +87,69 @@ export default function HistoryScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#dbeafe', '#fef3c7']}
-        style={styles.background}
-      >
-        <View style={styles.safeArea}>
-          <View style={styles.headerRow}>
-            <Text style={styles.headerSubtitle}>Revisit the wisdom shared with you</Text>
-            {pastQueries.length > 0 && (
-              <TouchableOpacity onPress={clearHistory} style={styles.clearIconButton}>
-                <Trash2 size={20} color="#dc2626" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {loading ? (
-              <View style={styles.centerContainer}>
-                <Text style={styles.infoText}>Loading history...</Text>
-              </View>
-            ) : pastQueries.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <History size={64} color={colors.gray[300]} />
-                <Text style={styles.emptyText}>No past queries yet</Text>
-                <Text style={styles.emptySubtext}>
-                  Your previous questions and guidance will appear here
-                </Text>
-                <TouchableOpacity
-                  style={styles.askButton}
-                  onPress={() => navigation.navigate('Home' as any)}
-                >
-                  <Text style={styles.askButtonText}>Ask a Question</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.queriesList}>
-                {pastQueries.map((pastQuery, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.queryCard}
-                    onPress={() => handleQueryPress(pastQuery)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.queryCardHeader}>
-                      <View style={styles.queryIcon}>
-                        <Sparkles size={20} color={colors.spiritual.gold.DEFAULT} />
-                      </View>
-                      <View style={styles.queryContent}>
-                        <Text style={styles.queryText} numberOfLines={2}>
-                          {pastQuery.query}
-                        </Text>
-                        <Text style={styles.queryTime}>
-                          {new Date(pastQuery.timestamp).toLocaleDateString()} at {new Date(pastQuery.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                      </View>
-                      <ChevronRight size={20} color={colors.gray[300]} />
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </ScrollView>
-
-          {/* Floating Om Symbol */}
-          <View style={styles.omContainer} pointerEvents="none">
-            <Text style={styles.omSymbol}>ॐ</Text>
-          </View>
+      <View style={styles.safeArea}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerSubtitle}>Revisit the wisdom shared with you</Text>
+          {pastQueries.length > 0 && (
+            <TouchableOpacity onPress={clearHistory} style={styles.clearIconButton}>
+              <Trash2 size={20} color="#dc2626" />
+            </TouchableOpacity>
+          )}
         </View>
-      </LinearGradient>
+
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <View style={styles.centerContainer}>
+              <Text style={styles.infoText}>Loading history...</Text>
+            </View>
+          ) : pastQueries.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <History size={64} color={colors.gray[300]} />
+              <Text style={styles.emptyText}>No past queries yet</Text>
+              <Text style={styles.emptySubtext}>
+                Your previous questions and guidance will appear here
+              </Text>
+              <TouchableOpacity
+                style={styles.askButton}
+                onPress={() => navigation.navigate('HomeMain' as any, { screen: 'HomeScreen' })}
+              >
+                <Text style={styles.askButtonText}>Ask a Question</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.queriesList}>
+              {pastQueries.map((pastQuery, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.queryCard}
+                  onPress={() => handleQueryPress(pastQuery)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.queryCardHeader}>
+                    <View style={styles.queryIcon}>
+                      <Sparkles size={20} color={colors.primary[600]} />
+                    </View>
+                    <View style={styles.queryContent}>
+                      <Text style={styles.queryText} numberOfLines={2}>
+                        {pastQuery.query}
+                      </Text>
+                      <Text style={styles.queryTime}>
+                        {new Date(pastQuery.timestamp).toLocaleDateString()} at {new Date(pastQuery.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    </View>
+                    <ChevronRight size={20} color={colors.gray[300]} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Floating Om Symbol */}
+        <View style={styles.omContainer} pointerEvents="none">
+          <Text style={styles.omSymbol}>ॐ</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -163,9 +157,7 @@ export default function HistoryScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
+    backgroundColor: colors.gray[50], // Warm off-white
   },
   safeArea: {
     flex: 1,
@@ -221,11 +213,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
   },
   askButton: {
-    backgroundColor: colors.spiritual.blue.DEFAULT,
+    backgroundColor: colors.primary[600], // Primary Green
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: 12,
-    shadowColor: colors.spiritual.blue.DEFAULT,
+    shadowColor: colors.primary[600],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -240,12 +232,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   queryCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
-    shadowColor: '#000',
+    borderColor: colors.gray[200],
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -259,7 +251,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: colors.primary[50], // Mint Green
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -285,6 +277,6 @@ const styles = StyleSheet.create({
   },
   omSymbol: {
     fontSize: 120,
-    color: colors.spiritual.gold.DEFAULT,
+    color: colors.gray[400],
   },
 });

@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import GuidanceForm from '../components/GuidanceForm';
 import ResponseDisplay from '../components/ResponseDisplay';
-import { AlertCircle, Loader } from 'lucide-react';
+import { AlertCircle, Loader, Hourglass, ArrowLeft } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '../config/api';
 
 const SpiritualHome = () => {
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedScripture, setSelectedScripture] = useState('gita');
 
   const handleSubmit = async (query) => {
     setIsLoading(true);
@@ -102,70 +103,118 @@ const SpiritualHome = () => {
 
       {/* Main Content */}
       <div className="relative z-10 px-4 py-8">
-        {/* Form Section */}
-        <GuidanceForm onSubmit={handleSubmit} isLoading={isLoading} />
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="w-full max-w-4xl mx-auto mt-12">
-            <div className="bg-white rounded-2xl shadow-2xl p-12 border border-gray-100">
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <div className="relative">
-                  <Loader className="w-16 h-16 text-spiritual-blue animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-spiritual-gold rounded-full animate-pulse-slow"></div>
+        {/* Scripture Selector */}
+        <div className="w-full max-w-4xl mx-auto mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Choose Your Wisdom Source
+            </label>
+            <select
+              value={selectedScripture}
+              onChange={(e) => setSelectedScripture(e.target.value)}
+              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-spiritual-blue focus:border-transparent outline-none transition-all cursor-pointer"
+            >
+              <option value="gita">📖 Bhagavad Gita</option>
+              <option value="bible">✝️ Bible</option>
+              <option value="quran">☪️ Quran</option>
+              <option value="torah">🕍 Torah</option>
+            </select>
+          </div>
+        </div>
+
+        {selectedScripture === 'gita' ? (
+          <>
+            {/* Form Section */}
+            <GuidanceForm onSubmit={handleSubmit} isLoading={isLoading} />
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="w-full max-w-4xl mx-auto mt-12">
+                <div className="bg-white rounded-2xl shadow-2xl p-12 border border-gray-100">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative">
+                      <Loader className="w-16 h-16 text-spiritual-blue animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-spiritual-gold rounded-full animate-pulse-slow"></div>
+                      </div>
+                    </div>
+                    <p className="text-lg text-gray-600 animate-pulse">
+                      Consulting the wisdom of the Bhagavad Gita...
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      This may take a few moments
+                    </p>
                   </div>
                 </div>
-                <p className="text-lg text-gray-600 animate-pulse">
-                  Consulting the wisdom of the Bhagavad Gita...
-                </p>
-                <p className="text-sm text-gray-500">
-                  This may take a few moments
-                </p>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Error State */}
-        {error && !isLoading && (
-          <div className="w-full max-w-4xl mx-auto mt-12 animate-slide-up">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-              <div className="flex items-start space-x-3">
-                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-lg font-semibold text-red-800 mb-1">
-                    Unable to Provide Guidance
-                  </h3>
-                  <p className="text-red-700">{error}</p>
-                  <button
-                    onClick={() => setError(null)}
-                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-                  >
-                    Try Again
-                  </button>
+            {/* Error State */}
+            {error && !isLoading && (
+              <div className="w-full max-w-4xl mx-auto mt-12 animate-slide-up">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-red-800 mb-1">
+                        Unable to Provide Guidance
+                      </h3>
+                      <p className="text-red-700">{error}</p>
+                      <button
+                        onClick={() => setError(null)}
+                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Response Display */}
-        {response && !isLoading && (
-          <ResponseDisplay response={response} />
-        )}
+            {/* Response Display */}
+            {response && !isLoading && (
+              <ResponseDisplay response={response} />
+            )}
 
-        {/* Footer Info */}
-        {!response && !isLoading && !error && (
-          <div className="w-full max-w-4xl mx-auto mt-16 text-center animate-fade-in">
-            <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 border border-spiritual-blue/20">
-              <p className="text-gray-600 mb-2">
-                Spiritual guidance from timeless wisdom traditions
+            {/* Footer Info */}
+            {!response && !isLoading && !error && (
+              <div className="w-full max-w-4xl mx-auto mt-16 text-center animate-fade-in">
+                <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 border border-spiritual-blue/20">
+                  <p className="text-gray-600 mb-2">
+                    Spiritual guidance from timeless wisdom traditions
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Powered by the Bhagavad Gita and AI • {' '}
+                    <span className="text-spiritual-blue font-medium">653 verses</span> available
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Coming Soon Message for Bible/Quran/Torah */
+          <div className="w-full max-w-4xl mx-auto mt-12 animate-fade-in">
+            <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-12 border border-gray-100 flex flex-col items-center text-center">
+              <div className="bg-gray-100 p-6 rounded-full mb-6">
+                <Hourglass className="w-16 h-16 text-gray-400" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
+                {selectedScripture} Coming Soon
+              </h2>
+              <p className="text-lg text-gray-600 max-w-lg mb-8 leading-relaxed">
+                We're working on bringing wisdom from the <span className="capitalize">{selectedScripture}</span> to Sarthi.
+                <br /><br />
+                For now, explore guidance from the Bhagavad Gita.
               </p>
-              <p className="text-sm text-gray-500">
-                Powered by the Bhagavad Gita and AI • {' '}
-                <span className="text-spiritual-blue font-medium">653 verses</span> available
-              </p>
+              <button
+                onClick={() => setSelectedScripture('gita')}
+                className="flex items-center space-x-2 px-6 py-3 bg-spiritual-blue text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Gita</span>
+              </button>
             </div>
           </div>
         )}

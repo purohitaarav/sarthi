@@ -23,6 +23,8 @@ Rules:
 - Cite verses as chapter.verse
 - Do not add new interpretations
 - Be concise and neutral
+
+Limit to 50 words
 `.trim();
 
 const QUERY_PARSER_SYSTEM_PROMPT = `

@@ -37,31 +37,39 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
 
     const { query, guidance, verses_referenced, timestamp } = response;
 
+    // Helper to parse **bold** text
+    const renderFormattedText = (text: string) => {
+        if (!text) return null;
+        const parts = text.split('**');
+        return parts.map((part, index) => {
+            if (index % 2 === 1) {
+                return <Text key={index} style={{ fontWeight: 'bold', color: colors.gray[900] }}>{part}</Text>;
+            }
+            return <Text key={index}>{part}</Text>;
+        });
+    };
+
     return (
         <View style={styles.container}>
             {/* Query */}
-            <LinearGradient
-                colors={['rgba(59, 130, 246, 0.1)', 'rgba(245, 158, 11, 0.1)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.queryContainer}
-            >
+            <View style={styles.queryContainer}>
                 <View style={styles.queryHeader}>
-                    <Quote size={20} color={colors.spiritual.blue.DEFAULT} />
+                    <Quote size={20} color={colors.primary[600]} />
                     <View style={styles.queryContent}>
                         <Text style={styles.queryLabel}>Your Question:</Text>
                         <Text style={styles.queryText}>{query}</Text>
                     </View>
                 </View>
-            </LinearGradient>
+            </View>
 
             {/* Guidance */}
             <View style={styles.guidanceCard}>
                 <View style={styles.cardHeader}>
-                    <Sparkles size={24} color={colors.spiritual.gold.DEFAULT} />
                     <Text style={styles.cardTitle}>Spiritual Guidance</Text>
                 </View>
-                <Text style={styles.guidanceText}>{guidance}</Text>
+                <Text style={styles.guidanceText}>
+                    {renderFormattedText(guidance)}
+                </Text>
                 <View style={styles.footerLine} />
                 <Text style={styles.timestampText}>
                     Received: {new Date(timestamp).toLocaleString()}
@@ -72,7 +80,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
             {verses_referenced?.length > 0 && (
                 <View style={styles.versesSection}>
                     <View style={styles.versesHeader}>
-                        <BookOpen size={24} color={colors.spiritual.blue.DEFAULT} />
+                        <BookOpen size={24} color={colors.primary[600]} />
                         <Text style={styles.versesTitle}>Referenced Verses</Text>
                     </View>
 
@@ -116,10 +124,11 @@ const styles = StyleSheet.create({
         marginTop: spacing.xl,
     },
     queryContainer: {
-        borderRadius: 16,
+        backgroundColor: colors.gray[100],
+        borderRadius: 12,
         padding: spacing.lg,
         borderWidth: 1,
-        borderColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: colors.gray[200],
         marginBottom: spacing.lg,
     },
     queryHeader: {
@@ -132,25 +141,28 @@ const styles = StyleSheet.create({
     },
     queryLabel: {
         fontSize: 12,
-        color: colors.gray[600],
-        marginBottom: 2,
+        fontWeight: '600',
+        color: colors.gray[500],
+        marginBottom: 4,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     queryText: {
-        fontSize: 17,
-        fontWeight: '600',
+        fontSize: 16,
         color: colors.gray[800],
+        lineHeight: 22,
     },
     guidanceCard: {
         backgroundColor: colors.white,
-        borderRadius: 24,
+        borderRadius: 16,
         padding: spacing.xl,
         shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 5,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
         borderWidth: 1,
-        borderColor: colors.gray[100],
+        borderColor: colors.gray[200],
         marginBottom: spacing.lg,
     },
     cardHeader: {
@@ -160,12 +172,13 @@ const styles = StyleSheet.create({
         marginBottom: spacing.md,
     },
     cardTitle: {
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 22,
+        fontWeight: '700',
         color: colors.gray[900],
+        letterSpacing: -0.5,
     },
     guidanceText: {
-        fontSize: 17,
+        fontSize: 16,
         lineHeight: 26,
         color: colors.gray[700],
     },
@@ -180,11 +193,11 @@ const styles = StyleSheet.create({
         color: colors.gray[400],
     },
     versesSection: {
-        backgroundColor: 'rgba(237, 233, 254, 0.3)',
-        borderRadius: 24,
+        backgroundColor: colors.primary[50], // Mint background
+        borderRadius: 16,
         padding: spacing.lg,
         borderWidth: 1,
-        borderColor: 'rgba(139, 92, 246, 0.1)',
+        borderColor: colors.primary[100],
         marginBottom: spacing.xl,
     },
     versesHeader: {
@@ -194,7 +207,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.lg,
     },
     versesTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
         color: colors.gray[900],
     },
@@ -203,13 +216,15 @@ const styles = StyleSheet.create({
     },
     verseCard: {
         backgroundColor: colors.white,
-        borderRadius: 16,
+        borderRadius: 12,
         padding: spacing.lg,
         shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
+        shadowRadius: 4,
+        elevation: 1,
+        borderWidth: 1,
+        borderColor: colors.gray[200],
     },
     verseHeader: {
         flexDirection: 'row',
@@ -220,10 +235,10 @@ const styles = StyleSheet.create({
     verseReference: {
         fontSize: 14,
         fontWeight: '700',
-        color: colors.spiritual.blue.DEFAULT,
+        color: colors.primary[700], // Green text
     },
     verseTranslation: {
-        fontSize: 16,
+        fontSize: 15,
         color: colors.gray[800],
         lineHeight: 22,
     },
@@ -236,7 +251,7 @@ const styles = StyleSheet.create({
     purportLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: colors.gray[700],
+        color: colors.gray[600],
         marginBottom: 4,
     },
     purportText: {

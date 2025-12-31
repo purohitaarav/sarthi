@@ -7,16 +7,48 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  TouchableOpacity,
+  Modal,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Ionicons from '@expo/vector-icons/Ionicons'; // Icons
 import { guidanceService } from '../services/guidanceService';
 import GuidanceForm from '../components/GuidanceForm';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
+  const [selectedScripture, setSelectedScripture] = useState('gita');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const scriptures = [
+    { label: "📖 Bhagavad Gita", value: "gita" },
+    { label: "✝️ Bible", value: "bible" },
+    { label: "☪️ Quran", value: "quran" },
+    { label: "🕍 Torah", value: "torah" }
+  ];
+
+  const handleSelectScripture = (value: string) => {
+    setSelectedScripture(value);
+    setIsDropdownOpen(false);
+  };
+
+  const getSelectedLabel = () => {
+    return scriptures.find(s => s.value === selectedScripture)?.label || "Select Source";
+  };
+
+  // ... (keeping handleSubmit unchanged)
+
+  const getScriptureName = (value: string) => {
+    switch (value) {
+      case 'bible': return 'Bible';
+      case 'quran': return 'Quran';
+      case 'torah': return 'Torah';
+      default: return 'Scripture';
+    }
+  };
 
   const handleSubmit = async (query: string) => {
     setLoading(true);
@@ -72,41 +104,80 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#dbeafe', '#fef3c7']}
-        style={styles.background}
-      >
-        <View style={styles.safeArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-              <GuidanceForm onSubmit={handleSubmit} isLoading={loading} />
+      <View style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            {/* Scripture Selector */}
+            <View style={styles.scriptureSelector}>
+              <Text style={styles.selectorLabel}>Choose Your Wisdom Source</Text>
 
-              {!loading && (
-                <View style={styles.welcomeSection}>
-                  <View style={styles.welcomeCard}>
-                    <Text style={styles.welcomeEmoji}>🙏</Text>
-                    <Text style={styles.welcomeTitle}>Welcome to Sarthi</Text>
-                    <Text style={styles.welcomeText}>
-                      The Bhagavad Gita offers timeless wisdom for modern challenges.
-                      Ask your question and find clarity in its verses.
-                    </Text>
-                    <View style={styles.footerInfo}>
-                      <Text style={styles.footerText}>
-                        Powered by the Bhagavad Gita and AI • <Text style={styles.highlightText}>653 verses</Text> available
+              {/* Custom Dropdown Trigger */}
+              <TouchableOpacity
+                style={styles.dropdownTrigger}
+                onPress={() => setIsDropdownOpen(!isDropdownOpen)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.dropdownValue}>{getSelectedLabel()}</Text>
+                <Ionicons
+                  name={isDropdownOpen ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={colors.primary[600]}
+                />
+              </TouchableOpacity>
+
+              {/* Dropdown Options (Rendered conditionally) */}
+              {isDropdownOpen && (
+                <View style={styles.dropdownOptions}>
+                  {scriptures.map((item) => (
+                    <TouchableOpacity
+                      key={item.value}
+                      style={[
+                        styles.dropdownOption,
+                        selectedScripture === item.value && styles.dropdownOptionSelected
+                      ]}
+                      onPress={() => handleSelectScripture(item.value)}
+                    >
+                      <Text style={[
+                        styles.dropdownOptionText,
+                        selectedScripture === item.value && styles.dropdownOptionTextSelected
+                      ]}>
+                        {item.label}
                       </Text>
-                    </View>
-                  </View>
+                      {selectedScripture === item.value && (
+                        <Ionicons name="checkmark" size={20} color={colors.primary[600]} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
                 </View>
               )}
             </View>
-          </ScrollView>
 
-          {/* Floating Om Symbol */}
-          <View style={styles.omContainer} pointerEvents="none">
-            <Text style={styles.omSymbol}>ॐ</Text>
+            {/* Conditional Content */}
+            {selectedScripture === 'gita' ? (
+              <GuidanceForm onSubmit={handleSubmit} isLoading={loading} />
+            ) : (
+              /* Coming Soon Message for Bible/Quran/Torah */
+              <View style={styles.comingSoonContainer}>
+                <Ionicons name="hourglass-outline" size={64} color={colors.gray[300]} />
+                <Text style={styles.comingSoonTitle}>
+                  {getScriptureName(selectedScripture)} Coming Soon
+                </Text>
+                <Text style={styles.comingSoonText}>
+                  We're working on bringing wisdom from the {getScriptureName(selectedScripture)} to Sarthi.
+                  {'\n\n'}
+                  For now, explore guidance from the Bhagavad Gita.
+                </Text>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => setSelectedScripture('gita')}
+                >
+                  <Text style={styles.backButtonText}>← Back to Gita</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        </View>
-      </LinearGradient>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -114,9 +185,7 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
+    backgroundColor: colors.gray[50], // Warm off-white
   },
   safeArea: {
     flex: 1,
@@ -129,16 +198,120 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: spacing.xxl,
   },
+  scriptureSelector: {
+    width: '90%',
+    marginBottom: 24,
+    zIndex: 10, // Ensure dropdown appears above
+  },
+  selectorLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gray[600],
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    // Modern subtle shadow
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  dropdownValue: {
+    fontSize: 16,
+    color: colors.gray[800],
+    fontWeight: '500',
+  },
+  dropdownOptions: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    marginTop: 8,
+    overflow: 'hidden',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  dropdownOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[100],
+  },
+  dropdownOptionSelected: {
+    backgroundColor: colors.primary[50],
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: colors.gray[600],
+  },
+  dropdownOptionTextSelected: {
+    color: colors.primary[800],
+    fontWeight: '600',
+  },
+  comingSoonContainer: {
+    width: '90%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+  },
+  comingSoonTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.gray[800],
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  comingSoonText: {
+    fontSize: 16,
+    color: colors.gray[500],
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  backButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: colors.primary[700], // Primary Green
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   welcomeSection: {
     width: '90%',
     marginTop: spacing.xxl,
   },
   welcomeCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: colors.gray[200],
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -153,40 +326,40 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#4B5563',
+    color: colors.gray[800],
     marginBottom: spacing.xs,
   },
   welcomeText: {
     fontSize: 15,
-    color: '#6B7280',
+    color: colors.gray[500],
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.md,
   },
   footerInfo: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(59, 130, 246, 0.1)',
+    borderTopColor: colors.gray[100],
     width: '100%',
     paddingTop: spacing.md,
     alignItems: 'center',
   },
   footerText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.gray[400],
     textAlign: 'center',
   },
   highlightText: {
-    color: colors.spiritual.blue.DEFAULT,
+    color: colors.primary[700],
     fontWeight: '600',
   },
   omContainer: {
     position: 'absolute',
     bottom: 40,
     right: 20,
-    opacity: 0.1,
+    opacity: 0.05, // Very subtle
   },
   omSymbol: {
     fontSize: 100,
-    color: colors.spiritual.gold.DEFAULT,
+    color: colors.gray[400], // Neutral gray instead of gold
   },
 });

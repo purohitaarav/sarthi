@@ -16,7 +16,6 @@ import { useIsFocused } from '@react-navigation/native';
 import { spacing } from '../theme/spacing';
 import { colors } from '../theme/colors';
 import { Trash2, Plus, X, MessageSquare, BookOpen } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { reflectionService, Reflection } from '../services/reflectionService';
 
 export default function ReflectionsScreen({ navigation }: any) {
@@ -146,98 +145,93 @@ export default function ReflectionsScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-      <LinearGradient
-        colors={['#dbeafe', '#fef3c7']}
-        style={styles.background}
-      >
-        <View style={styles.safeArea}>
-          <View style={styles.headerRow}>
-            <Text style={styles.headerSubtitle}>Reflect on the teachings of the Gita</Text>
+      <View style={styles.safeArea}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerSubtitle}>Reflect on the teachings of the Gita</Text>
+          <TouchableOpacity
+            onPress={() => setShowForm(!showForm)}
+            style={[styles.addButton, showForm && styles.cancelButton]}
+          >
+            {showForm ? <X size={20} color="#fff" /> : <Plus size={20} color="#fff" />}
+            <Text style={styles.addButtonText}>{showForm ? 'Cancel' : 'Add'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showForm && (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>New Reflection</Text>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              value={formData.reflection_text}
+              onChangeText={(text) => setFormData({ ...formData, reflection_text: text })}
+              placeholder="Share your thoughts and reflections..."
+              placeholderTextColor={colors.gray[400]}
+            />
+            <View style={styles.formInputs}>
+              <TextInput
+                style={styles.smallInput}
+                value={formData.verse_id}
+                onChangeText={(text) => setFormData({ ...formData, verse_id: text, chapter_id: '' })}
+                placeholder="Verse ID"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={styles.smallInput}
+                value={formData.chapter_id}
+                onChangeText={(text) => setFormData({ ...formData, chapter_id: text, verse_id: '' })}
+                placeholder="Chapter ID"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="numeric"
+                editable={formData.verse_id === ''}
+              />
+            </View>
             <TouchableOpacity
-              onPress={() => setShowForm(!showForm)}
-              style={[styles.addButton, showForm && styles.cancelButton]}
+              style={[styles.submitButton, submitting && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={submitting}
             >
-              {showForm ? <X size={20} color="#fff" /> : <Plus size={20} color="#fff" />}
-              <Text style={styles.addButtonText}>{showForm ? 'Cancel' : 'Add'}</Text>
+              {submitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>Save Reflection</Text>
+              )}
             </TouchableOpacity>
           </View>
+        )}
 
-          {showForm && (
-            <View style={styles.formCard}>
-              <Text style={styles.formTitle}>New Reflection</Text>
-              <TextInput
-                style={styles.textArea}
-                multiline
-                numberOfLines={4}
-                value={formData.reflection_text}
-                onChangeText={(text) => setFormData({ ...formData, reflection_text: text })}
-                placeholder="Share your thoughts and reflections..."
-                placeholderTextColor={colors.gray[400]}
-              />
-              <View style={styles.formInputs}>
-                <TextInput
-                  style={styles.smallInput}
-                  value={formData.verse_id}
-                  onChangeText={(text) => setFormData({ ...formData, verse_id: text, chapter_id: '' })}
-                  placeholder="Verse ID"
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="numeric"
-                />
-                <TextInput
-                  style={styles.smallInput}
-                  value={formData.chapter_id}
-                  onChangeText={(text) => setFormData({ ...formData, chapter_id: text, verse_id: '' })}
-                  placeholder="Chapter ID"
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="numeric"
-                  editable={formData.verse_id === ''}
-                />
+        <FlatList
+          data={reflections}
+          renderItem={renderItem}
+          keyExtractor={item => item?.id?.toString() || Math.random().toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.emptyContainer}>
+                <View style={styles.emptyIconContainer}>
+                  <MessageSquare size={48} color={colors.gray[300]} />
+                </View>
+                <Text style={styles.emptyTitle}>No reflections yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Write down your personal insights and realisations from the Gita.
+                </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.submitButton, submitting && styles.disabledButton]}
-                onPress={handleSubmit}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Save Reflection</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+            ) : (
+              <View style={styles.centered}>
+                <ActivityIndicator color={colors.primary[600]} size="large" />
+              </View>
+            )
+          }
+        />
 
-          <FlatList
-            data={reflections}
-            renderItem={renderItem}
-            keyExtractor={item => item?.id?.toString() || Math.random().toString()}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              !loading ? (
-                <View style={styles.emptyContainer}>
-                  <View style={styles.emptyIconContainer}>
-                    <MessageSquare size={48} color={colors.gray[300]} />
-                  </View>
-                  <Text style={styles.emptyTitle}>No reflections yet</Text>
-                  <Text style={styles.emptySubtitle}>
-                    Write down your personal insights and realisations from the Gita.
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.centered}>
-                  <ActivityIndicator color={colors.spiritual.blue.DEFAULT} size="large" />
-                </View>
-              )
-            }
-          />
-
-          {/* Floating Om Symbol */}
-          <View style={styles.omContainer} pointerEvents="none">
-            <Text style={styles.omSymbol}>ॐ</Text>
-          </View>
+        {/* Floating Om Symbol */}
+        <View style={styles.omContainer} pointerEvents="none">
+          <Text style={styles.omSymbol}>ॐ</Text>
         </View>
-      </LinearGradient>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -245,9 +239,7 @@ export default function ReflectionsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
+    backgroundColor: colors.gray[50], // Warm off-white
   },
   safeArea: {
     flex: 1,
@@ -266,7 +258,7 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.spiritual.blue.DEFAULT,
+    backgroundColor: colors.primary[600], // Primary Green
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: 12,
@@ -290,11 +282,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   formTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray[800],
+    color: colors.gray[900],
     marginBottom: spacing.md,
   },
   textArea: {
@@ -325,7 +319,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[50],
   },
   submitButton: {
-    backgroundColor: colors.spiritual.blue.DEFAULT,
+    backgroundColor: colors.primary[600], // Primary Green
     paddingVertical: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
@@ -344,12 +338,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: colors.gray[200],
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   cardContent: {
     gap: 12,
@@ -377,7 +376,7 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: colors.primary[50], // Mint Green
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -385,7 +384,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.spiritual.blue.DEFAULT,
+    color: colors.primary[700], // Green text
   },
   dateText: {
     fontSize: 12,
@@ -431,6 +430,6 @@ const styles = StyleSheet.create({
   },
   omSymbol: {
     fontSize: 100,
-    color: colors.spiritual.gold.DEFAULT,
+    color: colors.gray[400],
   },
 });

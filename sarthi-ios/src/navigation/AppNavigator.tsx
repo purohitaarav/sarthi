@@ -33,7 +33,7 @@ function HomeStack() {
           presentation: 'modal',
           title: 'Spiritual Guidance',
           headerStyle: { backgroundColor: '#fff' },
-          headerTintColor: '#5B21B6',
+          headerTintColor: '#1C1917',
           headerTitleStyle: { fontWeight: 'bold' },
         }}
       />
@@ -48,7 +48,7 @@ export default function AppNavigator() {
         <Stack.Navigator
           screenOptions={{
             headerStyle: { backgroundColor: '#fff' },
-            headerTintColor: '#5B21B6',
+            headerTintColor: '#1C1917', // Neutral Gray 900
             headerTitleStyle: { fontWeight: 'bold' },
             animation: 'fade', // Subtle fade instead of slide for drawer-like feel
           }}

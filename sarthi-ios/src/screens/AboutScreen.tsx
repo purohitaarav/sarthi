@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { Zap, Info } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const AboutScreen = () => {
   const benefits = [
@@ -17,68 +16,63 @@ const AboutScreen = () => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#dbeafe', '#fef3c7']}
-        style={styles.background}
-      >
-        <View style={styles.safeArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-              <View style={styles.headerInfo}>
-                <Info size={48} color={colors.spiritual.blue.DEFAULT} />
-                <Text style={styles.subtitle}>
-                  Your trusted companion for managing your digital life with ease and confidence
-                </Text>
-              </View>
+      <View style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <View style={styles.headerInfo}>
+              <Info size={48} color={colors.primary[600]} />
+              <Text style={styles.subtitle}>
+                Your trusted companion for managing your digital life with ease and confidence
+              </Text>
+            </View>
 
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>What We Offer</Text>
-                <Text style={styles.paragraph}>
-                  Sarthi is designed to simplify your daily tasks and help you stay organized.
-                  Whether you're managing personal projects, keeping track of important information,
-                  or collaborating with others, we've got you covered.
-                </Text>
-              </View>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>What We Offer</Text>
+              <Text style={styles.paragraph}>
+                Sarthi is designed to simplify your daily tasks and help you stay organized.
+                Whether you're managing personal projects, keeping track of important information,
+                or collaborating with others, we've got you covered.
+              </Text>
+            </View>
 
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Why Choose Us</Text>
-                <View style={styles.benefitsGrid}>
-                  {benefits.map((benefit, index) => (
-                    <View key={index} style={styles.benefitItem}>
-                      <Zap size={18} color={colors.spiritual.gold.DEFAULT} style={styles.benefitIcon} />
-                      <Text style={styles.benefitText}>{benefit}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.footerCard}>
-                <Text style={styles.footerTitle}>Getting Started</Text>
-                <View style={styles.stepItem}>
-                  <Text style={styles.stepNumber}>1.</Text>
-                  <Text style={styles.stepText}>Ask a question about life or spirituality.</Text>
-                </View>
-                <View style={styles.stepItem}>
-                  <Text style={styles.stepNumber}>2.</Text>
-                  <Text style={styles.stepText}>Receive guidance based on the Bhagavad Gita.</Text>
-                </View>
-                <View style={styles.stepItem}>
-                  <Text style={styles.stepNumber}>3.</Text>
-                  <Text style={styles.stepText}>Save and reflect on the wisdom received.</Text>
-                </View>
-                <View style={styles.versionInfo}>
-                  <Text style={styles.versionText}>Built with React Native & Expo</Text>
-                </View>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Why Choose Us</Text>
+              <View style={styles.benefitsGrid}>
+                {benefits.map((benefit, index) => (
+                  <View key={index} style={styles.benefitItem}>
+                    <Zap size={18} color={colors.primary[600]} style={styles.benefitIcon} />
+                    <Text style={styles.benefitText}>{benefit}</Text>
+                  </View>
+                ))}
               </View>
             </View>
-          </ScrollView>
 
-          {/* Floating Om Symbol */}
-          <View style={styles.omContainer} pointerEvents="none">
-            <Text style={styles.omSymbol}>ॐ</Text>
+            <View style={styles.footerCard}>
+              <Text style={styles.footerTitle}>Getting Started</Text>
+              <View style={styles.stepItem}>
+                <Text style={styles.stepNumber}>1.</Text>
+                <Text style={styles.stepText}>Ask a question about life or spirituality.</Text>
+              </View>
+              <View style={styles.stepItem}>
+                <Text style={styles.stepNumber}>2.</Text>
+                <Text style={styles.stepText}>Receive guidance based on the Bhagavad Gita.</Text>
+              </View>
+              <View style={styles.stepItem}>
+                <Text style={styles.stepNumber}>3.</Text>
+                <Text style={styles.stepText}>Save and reflect on the wisdom received.</Text>
+              </View>
+              <View style={styles.versionInfo}>
+                <Text style={styles.versionText}>Built with React Native & Expo</Text>
+              </View>
+            </View>
           </View>
+        </ScrollView>
+
+        {/* Floating Om Symbol */}
+        <View style={styles.omContainer} pointerEvents="none">
+          <Text style={styles.omSymbol}>ॐ</Text>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 };
@@ -86,9 +80,7 @@ const AboutScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
+    backgroundColor: colors.gray[50], // Warm off-white
   },
   safeArea: {
     flex: 1,
@@ -113,12 +105,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 20,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     padding: spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
-    shadowColor: '#000',
+    borderColor: colors.gray[200],
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -152,11 +144,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerCard: {
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+    backgroundColor: colors.primary[50], // Mint Green
     borderRadius: 20,
     padding: spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.1)',
+    borderColor: colors.primary[100],
     marginBottom: spacing.xxl,
   },
   footerTitle: {
@@ -171,7 +163,7 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     fontWeight: '700',
-    color: colors.spiritual.blue.DEFAULT,
+    color: colors.primary[700], // Green numbers
     marginRight: spacing.sm,
   },
   stepText: {
@@ -183,7 +175,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(59, 130, 246, 0.1)',
+    borderTopColor: colors.primary[200],
     paddingTop: spacing.md,
   },
   versionText: {
@@ -199,7 +191,7 @@ const styles = StyleSheet.create({
   },
   omSymbol: {
     fontSize: 120,
-    color: colors.spiritual.gold.DEFAULT,
+    color: colors.gray[400],
   },
 });
 
