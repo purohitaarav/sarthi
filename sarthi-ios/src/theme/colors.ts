@@ -4,7 +4,7 @@ export const colors = {
   primary: {
     50: '#F2FCF5',  // Very subtle green background
     100: '#E3F9E9', // Lighter green
-    200: '#C1F0D0', // Soft green accent
+    200: '#14532D', // Soft green accent
     300: '#14532D',
     400: '#14532D',
     500: '#14532D', // Standard Success/Growth Green

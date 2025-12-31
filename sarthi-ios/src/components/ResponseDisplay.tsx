@@ -88,7 +88,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
                         {verses_referenced.map((verse, index) => (
                             <TouchableOpacity
                                 key={index}
-                                activeOpacity={0.7}
+                                activeOpacity={0}
                                 onPress={() => toggleVerse(index)}
                                 style={styles.verseCard}
                             >
