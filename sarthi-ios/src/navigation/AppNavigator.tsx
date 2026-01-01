@@ -15,7 +15,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Home stack with modal Response screen
+// Home stack
 function HomeStack() {
   return (
     <Stack.Navigator>
@@ -24,17 +24,6 @@ function HomeStack() {
         component={HomeScreen}
         options={{
           header: () => <CustomHeader title="Ask Guidance" />,
-        }}
-      />
-      <Stack.Screen
-        name="Response"
-        component={ResponseScreen}
-        options={{
-          presentation: 'modal',
-          title: 'Spiritual Guidance',
-          headerStyle: { backgroundColor: '#fff' },
-          headerTintColor: '#1C1917',
-          headerTitleStyle: { fontWeight: 'bold' },
         }}
       />
     </Stack.Navigator>
@@ -61,7 +50,7 @@ export default function AppNavigator() {
             }}
           />
           <Stack.Screen
-            name="Reflection"
+            name="Reflections"
             component={ReflectionsScreen}
             options={{
               header: () => <CustomHeader title="My Reflections" />,
@@ -74,7 +63,17 @@ export default function AppNavigator() {
               header: () => <CustomHeader title="History" />,
             }}
           />
-
+          <Stack.Screen
+            name="Response"
+            component={ResponseScreen}
+            options={{
+              presentation: 'modal',
+              title: 'Spiritual Guidance',
+              headerStyle: { backgroundColor: '#fff' },
+              headerTintColor: '#1C1917',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
           <Stack.Screen
             name="About"
             component={AboutScreen}

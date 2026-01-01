@@ -24,7 +24,7 @@ export default function HomeScreen({ navigation }: any) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const scriptures = [
-    { label: "📖 Bhagavad Gita", value: "gita" },
+    { label: "🕉️ Bhagavad Gita", value: "gita" },
     { label: "✝️ Bible", value: "bible" },
     { label: "☪️ Quran", value: "quran" },
     { label: "🕍 Torah", value: "torah" }
@@ -164,15 +164,9 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
                 <Text style={styles.comingSoonText}>
                   We're working on bringing wisdom from the {getScriptureName(selectedScripture)} to Sarthi.
-                  {'\n\n'}
-                  For now, explore guidance from the Bhagavad Gita.
+
                 </Text>
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={() => setSelectedScripture('gita')}
-                >
-                  <Text style={styles.backButtonText}>← Back to Gita</Text>
-                </TouchableOpacity>
+
               </View>
             )}
           </View>
@@ -290,18 +284,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  backButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: colors.primary[700], // Primary Green
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
   welcomeSection: {
     width: '90%',
     marginTop: spacing.xxl,

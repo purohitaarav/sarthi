@@ -6,13 +6,14 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { spacing } from '../theme/spacing';
 import ResponseDisplay from '../components/ResponseDisplay';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 
+type ResponseScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ResponseScreenRouteProp = RouteProp<RootStackParamList, 'Response'>;
 
 interface Props {
@@ -21,6 +22,17 @@ interface Props {
 
 export default function ResponseScreen({ route }: Props) {
   const { query, verses, response, timestamp } = route.params;
+  const navigation = useNavigation<ResponseScreenNavigationProp>(); // Use specialized nav prop
+
+  const handleReflect = (queryText: string, time: string) => {
+    navigation.replace('Reflections', {
+      initialReflection: ``,
+      query: queryText,
+      timestamp: time,
+      response: response,
+      verses: verses
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -33,6 +45,7 @@ export default function ResponseScreen({ route }: Props) {
               verses_referenced: verses || [],
               timestamp: timestamp || new Date().toISOString()
             }}
+            onReflect={handleReflect}
           />
         </ScrollView>
 

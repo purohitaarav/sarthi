@@ -99,24 +99,24 @@ const CustomDrawer: React.FC = () => {
 
                 <View style={styles.navItems}>
                     <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('HomeMain' as any)}>
-                        <Sparkles size={22} color={colors.spiritual.blue.DEFAULT} />
+                        <Sparkles size={22} color={colors.primary[700]} />
                         <Text style={styles.navText}>Home</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('Reflection')}>
-                        <BookOpen size={22} color={colors.spiritual.blue.DEFAULT} />
+                    <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('Reflections')}>
+                        <BookOpen size={22} color={colors.primary[700]} />
                         <Text style={styles.navText}>Reflections</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('History')}>
-                        <History size={22} color={colors.spiritual.blue.DEFAULT} />
+                        <History size={22} color={colors.primary[700]} />
                         <Text style={styles.navText}>History</Text>
                     </TouchableOpacity>
 
 
 
                     <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('About')}>
-                        <Info size={22} color={colors.spiritual.blue.DEFAULT} />
+                        <Info size={22} color={colors.primary[700]} />
                         <Text style={styles.navText}>About Sarthi</Text>
                     </TouchableOpacity>
                 </View>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '800',
-        color: colors.spiritual.blue.DEFAULT,
+        color: colors.primary[700],
     },
     closeButton: {
         padding: 4,

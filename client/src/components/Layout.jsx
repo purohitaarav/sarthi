@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Package, Sparkles, Info, Menu, X } from 'lucide-react';
+import { Home, Users, Package, Sparkles, Info, Menu, X, History } from 'lucide-react';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -8,10 +8,8 @@ const Layout = ({ children }) => {
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/guidance', label: 'AI Guidance', icon: Sparkles, highlight: true },
-    { path: '/users', label: 'Users', icon: Users },
+    { path: '/history', label: 'History', icon: History },
     { path: '/reflections', label: 'Reflections', icon: Package },
-    { path: '/spiritual', label: 'Spiritual', icon: Sparkles },
     { path: '/about', label: 'About', icon: Info },
   ];
 
@@ -35,11 +33,10 @@ const Layout = ({ children }) => {
                   <Link
                     key={path}
                     to={path}
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      location.pathname === path
-                        ? 'border-primary-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    } ${highlight ? 'relative' : ''}`}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${location.pathname === path
+                      ? 'border-primary-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      } ${highlight ? 'relative' : ''}`}
                   >
                     <Icon className="w-4 h-4 mr-2" />
                     {label}
@@ -80,11 +77,10 @@ const Layout = ({ children }) => {
                   key={path}
                   to={path}
                   onClick={closeMobileMenu}
-                  className={`flex items-center px-4 py-3 text-base font-medium ${
-                    location.pathname === path
-                      ? 'bg-primary-50 border-l-4 border-primary-500 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  } ${highlight ? 'relative' : ''}`}
+                  className={`flex items-center px-4 py-3 text-base font-medium ${location.pathname === path
+                    ? 'bg-primary-50 border-l-4 border-primary-500 text-primary-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    } ${highlight ? 'relative' : ''}`}
                 >
                   <Icon className={`w-5 h-5 mr-3 ${location.pathname === path ? 'text-primary-500' : 'text-gray-400'}`} />
                   {label}

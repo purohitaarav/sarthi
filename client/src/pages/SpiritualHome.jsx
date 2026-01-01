@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import GuidanceForm from '../components/GuidanceForm';
 import ResponseDisplay from '../components/ResponseDisplay';
-import { AlertCircle, Loader, Hourglass, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Loader, Hourglass } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '../config/api';
+
+const HISTORY_STORAGE_KEY = '@sarthi_past_queries';
 
 const SpiritualHome = () => {
   const [response, setResponse] = useState(null);
@@ -11,20 +14,34 @@ const SpiritualHome = () => {
   const [error, setError] = useState(null);
   const [selectedScripture, setSelectedScripture] = useState('gita');
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check for history navigation
+  useEffect(() => {
+    if (location.state?.historyResponse) {
+      setResponse(location.state.historyResponse);
+      // Clear state to avoid persistent history view on refresh if desired, 
+      // but keeping it is fine. 
+      // Maybe scroll to it?
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [location.state]);
+
   const handleSubmit = async (query) => {
     setIsLoading(true);
     setError(null);
     setResponse(null);
 
     const requestUrl = `${API_CONFIG.baseURL}${API_ENDPOINTS.guidanceAsk}`;
-    console.log('Making request to:', requestUrl);
-    console.log('Base URL:', API_CONFIG.baseURL);
-    console.log('Endpoint:', API_ENDPOINTS.guidanceAsk);
-    console.log('Timeout set to:', API_CONFIG.timeout, 'ms');
     const startTime = Date.now();
 
     try {
-      // Make request to guidance/ask endpoint (matches web version)
       const result = await axios.post(
         requestUrl,
         {
@@ -37,12 +54,24 @@ const SpiritualHome = () => {
         }
       );
 
-      const duration = Date.now() - startTime;
-      console.log('Request completed in:', duration, 'ms');
-
       if (result.data.success) {
         setResponse(result.data);
-        // Scroll to response
+
+        // Save to History
+        try {
+          const newHistoryItem = {
+            query: query,
+            timestamp: new Date().toISOString(),
+            response: result.data // Store full response structure
+          };
+
+          const existingHistory = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+          const updatedHistory = [newHistoryItem, ...existingHistory];
+          localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+        } catch (storageErr) {
+          console.error('Failed to save to history:', storageErr);
+        }
+
         setTimeout(() => {
           window.scrollTo({
             top: document.documentElement.scrollHeight,
@@ -53,37 +82,11 @@ const SpiritualHome = () => {
         setError(result.data.message || result.data.error || 'Failed to get guidance');
       }
     } catch (err) {
-      const duration = Date.now() - startTime;
       console.error('Error fetching guidance:', err);
-      console.error('Error code:', err.code);
-      console.error('Error message:', err.message);
-      console.error('Request duration before error:', duration, 'ms');
-      console.error('Response status:', err.response?.status);
-      console.error('Response data:', err.response?.data);
-
-      // Handle timeout errors
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout') || err.message?.includes('Timeout')) {
-        setError('Request timed out. The AI service is taking longer than expected. Please try again with a simpler query.');
-      } else if (err.response?.status === 500) {
-        // Server error - check for specific database errors
-        const errorData = err.response?.data;
-        if (errorData?.error?.includes('no such table') || errorData?.error?.includes('SQLITE_ERROR')) {
-          setError('The server database is not fully set up. Please contact the administrator to initialize the database.');
-        } else if (errorData?.error) {
-          setError(`Server error: ${errorData.error}. Please try again later or contact support.`);
-        } else {
-          setError('The server encountered an error. Please try again later.');
-        }
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Request timed out. Please try again with a simpler query.');
       } else if (err.response?.status === 503) {
         setError('AI service is currently unavailable. Please try again later.');
-      } else if (err.response?.status === 404) {
-        setError('No relevant verses found for your query. Try different keywords.');
-      } else if (err.response?.status === 504) {
-        setError('The server took too long to respond. Please try again.');
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK' || err.code === 'ERR_INTERNET_DISCONNECTED') {
-        setError('Network error. Please check your internet connection and try again.');
       } else {
         setError(`Failed to get guidance: ${err.message || 'Unknown error'}. Please try again.`);
       }
@@ -93,27 +96,20 @@ const SpiritualHome = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-serene relative">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}></div>
-      </div>
-
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50 relative">
       {/* Main Content */}
       <div className="relative z-10 px-4 py-8">
 
         {/* Scripture Selector */}
         <div className="w-full max-w-4xl mx-auto mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Choose Your Wisdom Source
             </label>
             <select
               value={selectedScripture}
               onChange={(e) => setSelectedScripture(e.target.value)}
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-spiritual-blue focus:border-transparent outline-none transition-all cursor-pointer"
+              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-primary-600 focus:border-transparent outline-none transition-all cursor-pointer"
             >
               <option value="gita">📖 Bhagavad Gita</option>
               <option value="bible">✝️ Bible</option>
@@ -131,19 +127,11 @@ const SpiritualHome = () => {
             {/* Loading State */}
             {isLoading && (
               <div className="w-full max-w-4xl mx-auto mt-12">
-                <div className="bg-white rounded-2xl shadow-2xl p-12 border border-gray-100">
+                <div className="bg-white rounded-2xl shadow-xl p-12 border border-gray-100">
                   <div className="flex flex-col items-center justify-center space-y-4">
-                    <div className="relative">
-                      <Loader className="w-16 h-16 text-spiritual-blue animate-spin" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 bg-spiritual-gold rounded-full animate-pulse-slow"></div>
-                      </div>
-                    </div>
+                    < Loader className="w-12 h-12 text-primary-600 animate-spin" />
                     <p className="text-lg text-gray-600 animate-pulse">
                       Consulting the wisdom of the Bhagavad Gita...
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      This may take a few moments
                     </p>
                   </div>
                 </div>
@@ -181,13 +169,13 @@ const SpiritualHome = () => {
             {/* Footer Info */}
             {!response && !isLoading && !error && (
               <div className="w-full max-w-4xl mx-auto mt-16 text-center animate-fade-in">
-                <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 border border-spiritual-blue/20">
+                <div className="bg-white rounded-xl p-6 border border-gray-200">
                   <p className="text-gray-600 mb-2">
                     Spiritual guidance from timeless wisdom traditions
                   </p>
                   <p className="text-sm text-gray-500">
                     Powered by the Bhagavad Gita and AI • {' '}
-                    <span className="text-spiritual-blue font-medium">653 verses</span> available
+                    <span className="text-primary-600 font-medium">653 verses</span> available
                   </p>
                 </div>
               </div>
@@ -196,7 +184,7 @@ const SpiritualHome = () => {
         ) : (
           /* Coming Soon Message for Bible/Quran/Torah */
           <div className="w-full max-w-4xl mx-auto mt-12 animate-fade-in">
-            <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-12 border border-gray-100 flex flex-col items-center text-center">
+            <div className="bg-white rounded-2xl shadow-xl p-12 border border-gray-100 flex flex-col items-center text-center">
               <div className="bg-gray-100 p-6 rounded-full mb-6">
                 <Hourglass className="w-16 h-16 text-gray-400" />
               </div>
@@ -208,21 +196,15 @@ const SpiritualHome = () => {
                 <br /><br />
                 For now, explore guidance from the Bhagavad Gita.
               </p>
-              <button
-                onClick={() => setSelectedScripture('gita')}
-                className="flex items-center space-x-2 px-6 py-3 bg-spiritual-blue text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Gita</span>
-              </button>
+              {/* Back button removed to match iOS */}
             </div>
           </div>
         )}
       </div>
 
       {/* Floating Om Symbol */}
-      <div className="fixed bottom-8 right-8 opacity-10 pointer-events-none">
-        <div className="text-8xl text-spiritual-gold animate-float">
+      <div className="fixed bottom-8 right-8 opacity-5 pointer-events-none">
+        <div className="text-8xl text-gray-400 animate-float">
           ॐ
         </div>
       </div>

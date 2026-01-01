@@ -72,15 +72,12 @@ export default function HistoryScreen({ navigation }: Props) {
 
   const handleQueryPress = (pastQuery: PastQuery) => {
     if (pastQuery.response) {
-      // Navigate to the Response screen nested within HomeMain stack
-      navigation.navigate('HomeMain' as any, {
-        screen: 'Response',
-        params: {
-          response: pastQuery.response.guidance,
-          query: pastQuery.query,
-          verses: pastQuery.response.verses_referenced || [],
-          timestamp: pastQuery.timestamp,
-        }
+      // Navigate to the Response screen
+      navigation.navigate('Response' as any, {
+        response: pastQuery.response.guidance,
+        query: pastQuery.query,
+        verses: pastQuery.response.verses_referenced || [],
+        timestamp: pastQuery.timestamp,
       });
     }
   };
@@ -111,7 +108,7 @@ export default function HistoryScreen({ navigation }: Props) {
               </Text>
               <TouchableOpacity
                 style={styles.askButton}
-                onPress={() => navigation.navigate('HomeMain' as any, { screen: 'HomeScreen' })}
+                onPress={() => navigation.navigate('HomeMain' as any, { screen: 'Home' })}
               >
                 <Text style={styles.askButtonText}>Ask a Question</Text>
               </TouchableOpacity>

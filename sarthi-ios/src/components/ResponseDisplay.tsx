@@ -24,9 +24,11 @@ interface ResponseDisplayProps {
         verses_referenced: VerseReference[];
         timestamp: string;
     };
+    onReflect?: (query: string, timestamp: string) => void;
+    hideReflectButton?: boolean;
 }
 
-const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
+const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response, onReflect, hideReflectButton }) => {
     const [expandedVerses, setExpandedVerses] = useState<Record<number, boolean>>({});
 
     const toggleVerse = (index: number) => {
@@ -37,15 +39,66 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
 
     const { query, guidance, verses_referenced, timestamp } = response;
 
-    // Helper to parse **bold** text
+    // Helper to parse **bold** and *italic* text
     const renderFormattedText = (text: string) => {
         if (!text) return null;
-        const parts = text.split('**');
-        return parts.map((part, index) => {
-            if (index % 2 === 1) {
-                return <Text key={index} style={{ fontWeight: 'bold', color: colors.gray[900] }}>{part}</Text>;
+
+        // Split by newlines first to handle bullets
+        const lines = text.split('\n');
+
+        return lines.map((line, lineIndex) => {
+            // detailed handling for bullet points
+            let cleanLine = line;
+            let isBullet = false;
+
+            if (cleanLine.trim().startsWith('* ')) {
+                cleanLine = cleanLine.trim().substring(2);
+                isBullet = true;
+            } else if (cleanLine.trim().startsWith('- ')) {
+                cleanLine = cleanLine.trim().substring(2);
+                isBullet = true;
             }
-            return <Text key={index}>{part}</Text>;
+
+            // Parse bold segments (**text**)
+            const boldParts = cleanLine.split('**');
+            const parsedLine = boldParts.map((boldPart, boldIndex) => {
+                // Odd indices are bold
+                if (boldIndex % 2 === 1) {
+                    return (
+                        <Text key={`${lineIndex}-bold-${boldIndex}`} style={{ fontWeight: 'bold', color: colors.gray[900] }}>
+                            {boldPart}
+                        </Text>
+                    );
+                }
+
+                // Even indices are not bold, check for italics (*text*)
+                const italicParts = boldPart.split('*');
+                return italicParts.map((italicPart, italicIndex) => {
+                    // Odd indices are italic
+                    if (italicIndex % 2 === 1) {
+                        return (
+                            <Text key={`${lineIndex}-italic-${boldIndex}-${italicIndex}`} style={{ fontStyle: 'italic', color: colors.gray[800] }}>
+                                {italicPart}
+                            </Text>
+                        );
+                    }
+                    // Plain text
+                    return (
+                        <Text key={`${lineIndex}-text-${boldIndex}-${italicIndex}`}>
+                            {italicPart}
+                        </Text>
+                    );
+                });
+            });
+
+            return (
+                <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 4 }}>
+                    {isBullet && <Text style={{ marginRight: 6, color: colors.gray[800] }}>•</Text>}
+                    <Text style={{ flex: 1, color: colors.gray[700], lineHeight: 24 }}>
+                        {parsedLine}
+                    </Text>
+                </View>
+            );
         });
     };
 
@@ -61,6 +114,17 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response }) => {
                     </View>
                 </View>
             </View>
+
+            {/* Reflection Button */}
+            {!hideReflectButton && onReflect && (
+                <TouchableOpacity
+                    style={styles.reflectButton}
+                    onPress={() => onReflect(query, timestamp)}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.reflectButtonText}>Reflect on this</Text>
+                </TouchableOpacity>
+            )}
 
             {/* Guidance */}
             <View style={styles.guidanceCard}>
@@ -176,6 +240,25 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: colors.gray[900],
         letterSpacing: -0.5,
+    },
+    reflectButton: {
+        backgroundColor: colors.primary[600],
+        borderRadius: 12, // Matches Seek Guidance
+        paddingVertical: spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
+        shadowColor: colors.primary[600],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    reflectButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.white,
+        letterSpacing: 0.5,
     },
     guidanceText: {
         fontSize: 16,
