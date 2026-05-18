@@ -13,7 +13,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://sarthi-backend.onrender.com/api/$1"
+      "destination": "https://sarthiai.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
@@ -35,11 +35,11 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://sarthi-backend.onrender.com"
+    "REACT_APP_API_URL": "https://sarthiai.onrender.com"
   },
   "build": {
     "env": {
-      "REACT_APP_API_URL": "https://sarthi-backend.onrender.com"
+      "REACT_APP_API_URL": "https://sarthiai.onrender.com"
     }
   },
   "headers": [
