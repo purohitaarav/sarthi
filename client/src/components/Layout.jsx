@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Package, Sparkles, Info, Menu, X, History } from 'lucide-react';
+import { Home, Package, Info, Menu, X, History } from 'lucide-react';
 
 const Layout = ({ children }) => {
   const location = useLocation();
