@@ -9,6 +9,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
+    "mobile": "cd sarthi-ios && npm start",
     "build": "cd client && npm run build",
     "install-deps": "npm install && cd client && npm install",
     "setup-db": "node server/scripts/setupDatabase.js",
@@ -34,7 +35,7 @@
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "expo": "^54.0.30",
+    "expo": "~54.0.34",
     "express": "^4.18.2",
     "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
@@ -53,6 +54,6 @@
     "typescript": "~5.9.2"
   },
   "optionalDependencies": {
-    "@libsql/linux-x64-gnu": "^0.5.22"
+    "@libsql/linux-x64-gnu": "^0.5.29"
   }
 }

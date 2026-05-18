@@ -40,6 +40,7 @@ interface LocalReflection {
     verses: any[];
     timestamp: string;
   };
+  tagged_verses?: string[];
 }
 
 type ReflectionsScreenRouteProp = RouteProp<RootStackParamList, 'Reflections'>;
@@ -56,7 +57,9 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     reflection_text: '',
+    tagged_verses: [] as string[],
   });
+  const [newTagInput, setNewTagInput] = useState('');
   const [contextData, setContextData] = useState<{ query: string; timestamp: string; response?: string; verses?: any[] } | null>(null);
 
   // Context Modal State
@@ -79,9 +82,18 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     if (route.params?.query) {
-      if (route.params.initialReflection !== undefined) {
-        setFormData(prev => ({ ...prev, reflection_text: route.params.initialReflection || '' }));
+      const newTaggedVerses: string[] = [];
+      if (route.params.verses && route.params.verses.length > 0) {
+        route.params.verses.forEach((v: any) => {
+          if (v.reference) newTaggedVerses.push(`Bhagavad Gita ${v.reference}`);
+        });
       }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        reflection_text: route.params.initialReflection || '',
+        tagged_verses: newTaggedVerses
+      }));
       setContextData({
         query: route.params.query,
         timestamp: route.params.timestamp || new Date().toISOString(),
@@ -129,14 +141,16 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
           guidance: contextData.response,
           verses: contextData.verses || [],
           timestamp: contextData.timestamp
-        } : undefined
+        } : undefined,
+        tagged_verses: formData.tagged_verses || []
       };
 
       const updatedReflections = [newReflection, ...reflections];
       await AsyncStorage.setItem(REFLECTIONS_STORAGE_KEY, JSON.stringify(updatedReflections));
       setReflections(updatedReflections);
 
-      setFormData({ reflection_text: '' });
+      setFormData({ reflection_text: '', tagged_verses: [] });
+      setNewTagInput('');
       setContextData(null);
       setShowForm(false);
     } catch (error) {
@@ -215,20 +229,26 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.cardFooter}>
-            {item.verse_id ? (
+          <View style={[styles.cardFooter, { flexWrap: 'wrap', gap: 8 }]}>
+            {item.tagged_verses?.map((tag, idx) => (
+              <View key={idx} style={styles.tag}>
+                <BookOpen size={12} color={colors.primary[600]} style={{ marginRight: 4 }} />
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+            {!item.tagged_verses && item.verse_id ? (
               <View style={styles.tag}>
                 <BookOpen size={12} color={colors.primary[600]} style={{ marginRight: 4 }} />
                 <Text style={styles.tagText}>Verse {item.verse_id}</Text>
               </View>
-            ) : item.chapter_id ? (
+            ) : !item.tagged_verses && item.chapter_id ? (
               <View style={styles.tag}>
                 <BookOpen size={12} color={colors.primary[600]} style={{ marginRight: 4 }} />
                 <Text style={styles.tagText}>Chapter {item.chapter_id}</Text>
               </View>
-            ) : <View />}
+            ) : null}
 
-            <Text style={styles.dateText}>
+            <Text style={[styles.dateText, { marginLeft: 'auto' }]}>
               {new Date(item.created_at).toLocaleDateString()}
             </Text>
           </View>
@@ -279,6 +299,48 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
                 <Text style={styles.contextDate}>{new Date(contextData.timestamp).toLocaleDateString()}</Text>
               </TouchableOpacity>
             )}
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+              {formData.tagged_verses?.map((tag, idx) => (
+                <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary[50], borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 }}>
+                  <BookOpen size={12} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 12, color: colors.primary[700], fontWeight: '600' }}>{tag}</Text>
+                  <TouchableOpacity 
+                    onPress={() => setFormData(prev => ({ ...prev, tagged_verses: prev.tagged_verses.filter(t => t !== tag) }))} 
+                    style={{ marginLeft: 8 }}
+                  >
+                    <X size={14} color={colors.primary[600]} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              <TextInput
+                style={styles.smallInput}
+                value={newTagInput}
+                onChangeText={setNewTagInput}
+                placeholder="Add tag (e.g. BG 2.14)"
+                placeholderTextColor={colors.gray[400]}
+                onSubmitEditing={() => {
+                  if (newTagInput.trim() && !formData.tagged_verses.includes(newTagInput.trim())) {
+                    setFormData(prev => ({ ...prev, tagged_verses: [...(prev.tagged_verses || []), newTagInput.trim()] }));
+                    setNewTagInput('');
+                  }
+                }}
+              />
+              <TouchableOpacity 
+                style={{ backgroundColor: colors.gray[100], paddingHorizontal: 16, justifyContent: 'center', borderRadius: 12 }}
+                onPress={() => {
+                  if (newTagInput.trim() && !formData.tagged_verses.includes(newTagInput.trim())) {
+                    setFormData(prev => ({ ...prev, tagged_verses: [...(prev.tagged_verses || []), newTagInput.trim()] }));
+                    setNewTagInput('');
+                  }
+                }}
+              >
+                <Text style={{ color: colors.gray[700], fontWeight: '600', fontSize: 14 }}>Add</Text>
+              </TouchableOpacity>
+            </View>
 
             <TextInput
               style={styles.textArea}

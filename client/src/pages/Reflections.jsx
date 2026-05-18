@@ -9,7 +9,8 @@ const Reflections = () => {
   const [reflections, setReflections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ reflection_text: '' });
+  const [formData, setFormData] = useState({ reflection_text: '', tagged_verses: [] });
+  const [newTagInput, setNewTagInput] = useState('');
   const [contextData, setContextData] = useState(null);
 
   // Modal State
@@ -24,9 +25,18 @@ const Reflections = () => {
 
     // Check for navigation state (from "Reflect on this")
     if (location.state?.query) {
-      if (location.state.initialReflection !== undefined) {
-        setFormData({ reflection_text: location.state.initialReflection || '' });
+      const newTaggedVerses = [];
+      if (location.state.verses && location.state.verses.length > 0) {
+        location.state.verses.forEach(v => {
+          if (v.reference) newTaggedVerses.push(`Bhagavad Gita ${v.reference}`);
+        });
       }
+
+      setFormData({ 
+        reflection_text: location.state.initialReflection || '',
+        tagged_verses: newTaggedVerses
+      });
+
       setContextData({
         query: location.state.query,
         timestamp: location.state.timestamp || new Date().toISOString(),
@@ -34,11 +44,28 @@ const Reflections = () => {
         verses: location.state.verses,
       });
       setShowForm(true);
-      // Clear state so reload doesn't re-trigger? 
-      // Actually React Router state persists on reload usually, but that's fine.
-      // We might want to replace history to clear it, but let's keep it simple.
+      
+      // Auto-focus the textarea for better UX
+      setTimeout(() => {
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+          textarea.focus();
+        }
+      }, 100);
     }
   }, [location.state]);
+
+  const handleAddTag = (e) => {
+    e.preventDefault();
+    if (newTagInput.trim() && !formData.tagged_verses.includes(newTagInput.trim())) {
+      setFormData(prev => ({ ...prev, tagged_verses: [...(prev.tagged_verses || []), newTagInput.trim()] }));
+      setNewTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setFormData(prev => ({ ...prev, tagged_verses: prev.tagged_verses.filter(t => t !== tagToRemove) }));
+  };
 
   const fetchReflections = () => {
     try {
@@ -67,14 +94,23 @@ const Reflections = () => {
           guidance: contextData.response,
           verses: contextData.verses || [],
           timestamp: contextData.timestamp
-        } : undefined
+        } : undefined,
+        tagged_verses: formData.tagged_verses || [],
+        // Additional metadata for better organization
+        metadata: {
+          source: 'spiritual_guidance',
+          template_used: true,
+          verses_count: contextData?.verses?.length || 0,
+          word_count: formData.reflection_text.split(' ').length
+        }
       };
 
       const updatedReflections = [newReflection, ...reflections];
       localStorage.setItem(REFLECTIONS_STORAGE_KEY, JSON.stringify(updatedReflections));
       setReflections(updatedReflections);
 
-      setFormData({ reflection_text: '' });
+      setFormData({ reflection_text: '', tagged_verses: [] });
+      setNewTagInput('');
       setContextData(null);
       setShowForm(false);
 
@@ -82,6 +118,9 @@ const Reflections = () => {
       if (location.state?.query) {
         navigate(location.pathname, { replace: true, state: {} });
       }
+
+      // Show success feedback
+      alert('Reflection saved successfully!');
 
     } catch (error) {
       console.error('Error creating reflection:', error);
@@ -166,18 +205,76 @@ const Reflections = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <textarea
-                value={formData.reflection_text}
-                onChange={(e) => setFormData({ ...formData, reflection_text: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all placeholder-gray-400"
-                rows="4"
-                placeholder="Share your thoughts and reflections..."
-              />
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {formData.tagged_verses?.map((tag, idx) => (
+                    <span key={idx} className="inline-flex items-center bg-primary-100 text-primary-800 text-sm px-3 py-1.5 rounded-full font-medium">
+                      <BookOpen className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+                      {tag}
+                      <button 
+                        type="button" 
+                        onClick={() => removeTag(tag)} 
+                        className="ml-2 text-primary-600 hover:text-red-500 focus:outline-none transition-colors"
+                        title="Remove tag"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    placeholder="Add verse or chapter tag (e.g., Chapter 2.14)"
+                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none"
+                    onKeyDown={(e) => { 
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag(e); 
+                      }
+                    }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleAddTag} 
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+                  >
+                    Add Tag
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <textarea
+                  value={formData.reflection_text}
+                  onChange={(e) => setFormData({ ...formData, reflection_text: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all placeholder-gray-400 font-mono text-sm leading-relaxed"
+                  rows="12"
+                  placeholder="Share your thoughts and reflections..."
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>{formData.reflection_text.split(' ').length} words</span>
+                {contextData && (
+                  <span className="flex items-center gap-2">
+                    <span>Based on spiritual guidance</span>
+                    {contextData.verses && (
+                      <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs">
+                        {contextData.verses.length} verses
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+                className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               >
+                <MessageSquare className="w-5 h-5" />
                 Save Reflection
               </button>
             </form>
@@ -233,16 +330,23 @@ const Reflections = () => {
                 </div>
 
                 <div className="flex items-center justify-between mt-4 border-t border-gray-50 pt-3">
-                  {/* Tags if any (legacy compatibility) */}
-                  <div className="flex gap-2">
-                    {reflection.verse_id && (
-                      <span className="inline-flex items-center bg-green-50 text-green-700 px-2 py-1 rounded-md text-xs font-medium">
-                        <BookOpen className="w-3 h-3 mr-1" /> Verse {reflection.verse_id}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Render modern array of tags */}
+                    {reflection.tagged_verses && reflection.tagged_verses.map((tag, idx) => (
+                      <span key={`tag-${idx}`} className="inline-flex items-center bg-primary-50 border border-primary-100 text-primary-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                        <BookOpen className="w-3 h-3 mr-1.5 opacity-70" /> {tag}
+                      </span>
+                    ))}
+                    
+                    {/* Render legacy tags if they exist */}
+                    {!reflection.tagged_verses && reflection.verse_id && (
+                      <span className="inline-flex items-center bg-primary-50 border border-primary-100 text-primary-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                        <BookOpen className="w-3 h-3 mr-1.5 opacity-70" /> Verse {reflection.verse_id}
                       </span>
                     )}
-                    {reflection.chapter_id && (
-                      <span className="inline-flex items-center bg-green-50 text-green-700 px-2 py-1 rounded-md text-xs font-medium">
-                        <BookOpen className="w-3 h-3 mr-1" /> Chapter {reflection.chapter_id}
+                    {!reflection.tagged_verses && reflection.chapter_id && (
+                      <span className="inline-flex items-center bg-primary-50 border border-primary-100 text-primary-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                        <BookOpen className="w-3 h-3 mr-1.5 opacity-70" /> Chapter {reflection.chapter_id}
                       </span>
                     )}
                   </div>

@@ -8,27 +8,27 @@ const Home = () => {
       icon: Zap,
       title: 'Ask a Question',
       description: 'Designed with a clean interface that makes managing your tasks a breeze',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      color: 'text-primary-600',
+      bg: 'bg-primary-50',
     },
     {
       icon: Users,
       title: 'Choose a Wisdom Source',
       description: 'Work together with your team in real-time',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
+      color: 'text-primary-600',
+      bg: 'bg-primary-50',
     },
     {
       icon: Settings,
       title: 'Receive Passages and Explanations',
       description: 'Tailor the experience to fit your specific needs',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
+      color: 'text-primary-600',
+      bg: 'bg-primary-50',
     },
   ];
 
   return (
-    <div className="px-4 py-8">
+    <div className="px-4 py-8 bg-gray-50 min-h-screen">
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-5xl font-bold text-gray-900 mb-6">
@@ -40,13 +40,13 @@ const Home = () => {
 
         <div className="flex justify-center gap-4">
           <Link
-            to="/guidance"
-            className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+            to="/spiritual-home"
+            className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm hover:shadow-md"
           >
             Begin Guidance
           </Link>
           <Link
-            to="/guidance"
+            to="/spiritual-home"
             className="px-6 py-3 border border-gray-300 font-medium rounded-lg hover:bg-gray-50 transition-colors"
           >
             Learn More
@@ -59,7 +59,7 @@ const Home = () => {
         {benefits.map((benefit, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl shadow-sm p-8 text-center hover:shadow-md transition-shadow"
+            className="bg-white rounded-xl shadow-sm p-8 text-center hover:shadow-md transition-shadow border border-gray-200"
           >
             <div className={`w-16 h-16 ${benefit.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
               <benefit.icon className={`w-8 h-8 ${benefit.color}`} />
@@ -75,15 +75,15 @@ const Home = () => {
       </div>
 
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-2xl p-12 text-center">
+      <div className="bg-primary-50 rounded-2xl p-12 text-center border border-primary-100">
         <BookOpen className="w-12 h-12 text-primary-600 mx-auto mb-6" />
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
           Join thousands of users who are already simplifying their workflow with Sarthi
         </p>
         <Link
-          to="/signup"
-          className="inline-flex items-center px-8 py-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+          to="/spiritual-home"
+          className="inline-flex items-center px-8 py-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm hover:shadow-md"
         >
           Create Your Free Account
           <ArrowRight className="w-5 h-5 ml-2" />
@@ -91,7 +91,7 @@ const Home = () => {
       </div>
 
       {/* Quick Links */}
-      <div className="mt-16 bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className="mt-16 bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Get Started</h2>
         <div className="grid md:grid-cols-3 gap-6">
           <Link

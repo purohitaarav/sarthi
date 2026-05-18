@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Sparkles, Quote, ChevronDown, ChevronUp, PenTool } from 'lucide-react';
+import { BookOpen, Quote, ChevronDown, PenTool, Sparkles } from 'lucide-react';
 
 const ResponseDisplay = ({ response, hideReflectButton = false }) => {
   const [expandedVerses, setExpandedVerses] = useState({});
@@ -17,7 +17,7 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
   const handleReflect = () => {
     navigate('/reflections', {
       state: {
-        initialReflection: '', // Empty draft
+        initialReflection: '',
         query: query,
         timestamp: timestamp,
         response: guidance,
@@ -25,7 +25,6 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
       }
     });
   };
-
   // Basic Markdown Parsing Function
   const renderFormattedText = (text) => {
     if (!text) return null;
@@ -74,7 +73,7 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
   return (
     <div className="w-full max-w-4xl mx-auto mt-12 animate-slide-up">
       {/* Query */}
-      <div className="bg-gradient-to-r from-blue-50 to-amber-50 rounded-2xl p-6 mb-6 border border-blue-100/50 shadow-sm relative overflow-hidden">
+      <div className="bg-primary-50 rounded-2xl p-6 mb-6 border border-primary-200 shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex items-start space-x-4">
           <div className="bg-white p-2 rounded-full shadow-sm">
             <Quote className="w-5 h-5 text-primary-600 transform scale-x-[-1]" />
@@ -90,7 +89,7 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
           <div className="mt-6 flex justify-end relative z-10">
             <button
               onClick={handleReflect}
-              className="flex items-center space-x-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md hover:bg-primary-700 hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+              className="flex items-center space-x-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-primary-700 hover:shadow-md transition-all"
             >
               <PenTool className="w-4 h-4" />
               <span>Reflect on this</span>
@@ -100,14 +99,11 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
       </div>
 
       {/* Guidance */}
-      <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-6 md:p-8 border border-gray-100 mb-8 relative overflow-hidden">
-        {/* Decorative background blur */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-50 rounded-full blur-3xl opacity-20 -mr-32 -mt-32"></div>
-
+      <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-200 mb-8 relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="bg-amber-100 p-2 rounded-lg">
-              <Sparkles className="w-6 h-6 text-amber-600" />
+            <div className="bg-primary-100 p-2 rounded-lg">
+              <Sparkles className="w-6 h-6 text-primary-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
               Spiritual Guidance
@@ -127,52 +123,50 @@ const ResponseDisplay = ({ response, hideReflectButton = false }) => {
 
       {/* Verses */}
       {verses_referenced?.length > 0 && (
-        <div className="bg-gradient-to-br from-purple-50 via-white to-purple-50/30 rounded-2xl p-1 border border-purple-100 shadow-lg shadow-purple-100/50">
-          <div className="p-6 md:p-8">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
-              <div className="bg-primary-100 p-2 rounded-lg">
-                <BookOpen className="w-5 h-5 text-primary-700" />
-              </div>
-              Referenced Verses
-            </h3>
+        <div className="bg-primary-50 rounded-2xl p-6 md:p-8 border border-primary-200 shadow-sm">
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
+            <div className="bg-primary-100 p-2 rounded-lg">
+              <BookOpen className="w-5 h-5 text-primary-700" />
+            </div>
+            Referenced Verses
+          </h3>
 
-            <div className="space-y-4">
-              {verses_referenced.map((verse, index) => (
-                <div
-                  key={index}
-                  onClick={() => toggleVerse(index)}
-                  className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer ${expandedVerses[index]
-                      ? 'shadow-md border-primary-200'
-                      : 'shadow-sm border-gray-200 hover:border-primary-200 hover:shadow-md'
-                    }`}
-                >
-                  <div className="p-5 flex justify-between items-center group">
-                    <span className="font-bold text-gray-800 group-hover:text-primary-700 transition-colors">
-                      Bhagavad Gita {verse.reference}
-                    </span>
-                    <div className={`p-1 rounded-full bg-gray-50 group-hover:bg-primary-50 transition-colors ${expandedVerses[index] ? 'rotate-180' : ''}`}>
-                      <ChevronDown className={`w-5 h-5 text-gray-400 group-hover:text-primary-600`} />
-                    </div>
-                  </div>
-
-                  {/* Expandable Content */}
-                  <div
-                    className={`transition-all duration-300 ease-in-out ${expandedVerses[index] ? 'max-h-[500px] opacity-100 px-5 pb-5' : 'max-h-0 opacity-0 px-5'
-                      }`}
-                  >
-                    <p className="text-gray-900 font-medium leading-relaxed italic border-l-4 border-primary-300 pl-4 py-1 bg-gray-50 rounded-r-lg mb-4">
-                      "{verse.translation}"
-                    </p>
-                    {verse.purport && (
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        <span className="font-semibold text-gray-700 uppercase text-xs tracking-wider block mb-1">Purport</span>
-                        {verse.purport}
-                      </p>
-                    )}
+          <div className="space-y-4">
+            {verses_referenced.map((verse, index) => (
+              <div
+                key={index}
+                onClick={() => toggleVerse(index)}
+                className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer ${expandedVerses[index]
+                    ? 'shadow-md border-primary-200'
+                    : 'shadow-sm border-gray-200 hover:border-primary-200 hover:shadow-md'
+                  }`}
+              >
+                <div className="p-5 flex justify-between items-center group">
+                  <span className="font-bold text-gray-800 group-hover:text-primary-700 transition-colors">
+                    Bhagavad Gita {verse.reference}
+                  </span>
+                  <div className={`p-1 rounded-full bg-gray-50 group-hover:bg-primary-50 transition-colors ${expandedVerses[index] ? 'rotate-180' : ''}`}>
+                    <ChevronDown className={`w-5 h-5 text-gray-400 group-hover:text-primary-600`} />
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Expandable Content */}
+                <div
+                  className={`transition-all duration-300 ease-in-out ${expandedVerses[index] ? 'max-h-[500px] opacity-100 px-5 pb-5' : 'max-h-0 opacity-0 px-5'
+                    }`}
+                >
+                  <p className="text-gray-900 font-medium leading-relaxed italic border-l-4 border-primary-300 pl-4 py-1 bg-gray-50 rounded-r-lg mb-4">
+                    "{verse.translation}"
+                  </p>
+                  {verse.purport && (
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      <span className="font-semibold text-gray-700 uppercase text-xs tracking-wider block mb-1">Purport</span>
+                      {verse.purport}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

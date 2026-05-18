@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState, useCallback } from 'react';
 
+// Use hardcoded API URL to avoid dotenv issues in Expo Go
 const API_URL = 'https://sarthiai.onrender.com/api';
 
 // Shared axios instance used across services

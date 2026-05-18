@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import GuidanceForm from '../components/GuidanceForm';
 import ResponseDisplay from '../components/ResponseDisplay';
-import { AlertCircle, Loader, Hourglass } from 'lucide-react';
+import { AlertCircle, Loader, Hourglass, ChevronDown, Check } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '../config/api';
 
 const HISTORY_STORAGE_KEY = '@sarthi_past_queries';
@@ -13,9 +13,34 @@ const SpiritualHome = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedScripture, setSelectedScripture] = useState('gita');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const location = useLocation();
-  const navigate = useNavigate();
+
+  const scriptures = [
+    { label: "🕉️ Bhagavad Gita", value: "gita" },
+    { label: "✝️ Bible", value: "bible" },
+    { label: "☪️ Quran", value: "quran" },
+    { label: "🕍 Torah", value: "torah" }
+  ];
+
+  const handleSelectScripture = (value) => {
+    setSelectedScripture(value);
+    setIsDropdownOpen(false);
+  };
+
+  const getSelectedLabel = () => {
+    return scriptures.find(s => s.value === selectedScripture)?.label || "Select Source";
+  };
+
+  const getScriptureName = (value) => {
+    switch (value) {
+      case 'bible': return 'Bible';
+      case 'quran': return 'Quran';
+      case 'torah': return 'Torah';
+      default: return 'Scripture';
+    }
+  };
 
   // Check for history navigation
   useEffect(() => {
@@ -39,7 +64,6 @@ const SpiritualHome = () => {
     setResponse(null);
 
     const requestUrl = `${API_CONFIG.baseURL}${API_ENDPOINTS.guidanceAsk}`;
-    const startTime = Date.now();
 
     try {
       const result = await axios.post(
@@ -55,7 +79,11 @@ const SpiritualHome = () => {
       );
 
       if (result.data.success) {
-        setResponse(result.data);
+        setResponse({
+          ...result.data,
+          query: query,
+          timestamp: new Date().toISOString()
+        });
 
         // Save to History
         try {
@@ -101,21 +129,48 @@ const SpiritualHome = () => {
       <div className="relative z-10 px-4 py-8">
 
         {/* Scripture Selector */}
-        <div className="w-full max-w-4xl mx-auto mb-8">
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="w-full max-w-4xl mx-auto mb-8 relative z-10">
+          <div className="w-full">
+            <label className="block text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">
               Choose Your Wisdom Source
             </label>
-            <select
-              value={selectedScripture}
-              onChange={(e) => setSelectedScripture(e.target.value)}
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-primary-600 focus:border-transparent outline-none transition-all cursor-pointer"
+            
+            {/* Custom Dropdown Trigger */}
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
             >
-              <option value="gita">📖 Bhagavad Gita</option>
-              <option value="bible">✝️ Bible</option>
-              <option value="quran">☪️ Quran</option>
-              <option value="torah">🕍 Torah</option>
-            </select>
+              <span className="text-gray-800 font-medium">{getSelectedLabel()}</span>
+              <ChevronDown 
+                className={`w-5 h-5 text-primary-600 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {/* Dropdown Options */}
+            {isDropdownOpen && (
+              <div className="absolute w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-20">
+                {scriptures.map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => handleSelectScripture(item.value)}
+                    className={`w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-b-0 transition-colors duration-150 ${
+                      selectedScripture === item.value 
+                        ? 'bg-primary-50 text-primary-800' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className={`font-medium ${
+                      selectedScripture === item.value ? 'font-semibold' : ''
+                    }`}>
+                      {item.label}
+                    </span>
+                    {selectedScripture === item.value && (
+                      <Check className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -186,17 +241,16 @@ const SpiritualHome = () => {
           <div className="w-full max-w-4xl mx-auto mt-12 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-xl p-12 border border-gray-100 flex flex-col items-center text-center">
               <div className="bg-gray-100 p-6 rounded-full mb-6">
-                <Hourglass className="w-16 h-16 text-gray-400" />
+                <Hourglass className="w-16 h-16 text-gray-300" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
-                {selectedScripture} Coming Soon
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                {getScriptureName(selectedScripture)} Coming Soon
               </h2>
-              <p className="text-lg text-gray-600 max-w-lg mb-8 leading-relaxed">
-                We're working on bringing wisdom from the <span className="capitalize">{selectedScripture}</span> to Sarthi.
+              <p className="text-lg text-gray-500 max-w-lg mb-8 leading-relaxed">
+                We're working on bringing wisdom from the {getScriptureName(selectedScripture)} to Sarthi.
                 <br /><br />
                 For now, explore guidance from the Bhagavad Gita.
               </p>
-              {/* Back button removed to match iOS */}
             </div>
           </div>
         )}
