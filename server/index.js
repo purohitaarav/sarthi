@@ -29,9 +29,12 @@ const corsOptions = {
 
     // In production, check ALLOWED_ORIGINS
     if (process.env.NODE_ENV === 'production') {
-      const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-      allowedOrigins.push('https://sarthi-murex.vercel.app'); // Explicitly allow Vercel frontend
-      
+      // Explicitly allow Vercel frontend (handles any trailing slash differences)
+      if (origin && origin.startsWith('https://sarthi-murex.vercel.app')) {
+        return callback(null, true);
+      }
+
+      const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
       if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
         return callback(null, true);
       }
