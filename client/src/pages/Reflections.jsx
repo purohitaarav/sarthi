@@ -385,18 +385,10 @@ const Reflections = () => {
               </div>
             </div>
 
-            {/* Floating Om */}
-            <div className="absolute bottom-8 right-8 opacity-5 pointer-events-none">
-              <span className="text-9xl text-gray-400">ॐ</span>
-            </div>
           </div>
         </div>
       )}
 
-      {/* Background Floating Om */}
-      <div className="fixed bottom-8 right-8 opacity-5 pointer-events-none z-0">
-        <span className="text-9xl text-gray-400">ॐ</span>
-      </div>
     </div>
   );
 };

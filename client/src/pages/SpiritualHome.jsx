@@ -256,12 +256,6 @@ const SpiritualHome = () => {
         )}
       </div>
 
-      {/* Floating Om Symbol */}
-      <div className="fixed bottom-8 right-8 opacity-5 pointer-events-none">
-        <div className="text-8xl text-gray-400 animate-float">
-          ॐ
-        </div>
-      </div>
     </div>
   );
 };

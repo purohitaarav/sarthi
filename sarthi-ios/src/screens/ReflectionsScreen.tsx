@@ -428,15 +428,8 @@ export default function ReflectionsScreen({ navigation, route }: Props) {
               )}
             </ScrollView>
 
-            {/* Floating Om Symbol */}
-            <View style={styles.omContainer} pointerEvents="none">
-              <Text style={styles.omSymbol}>ॐ</Text>
-            </View>
           </View>
         </Modal>
-        <View style={styles.omContainer} pointerEvents="none">
-          <Text style={styles.omSymbol}>ॐ</Text>
-        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -670,16 +663,6 @@ const styles = StyleSheet.create({
   centered: {
     paddingTop: 100,
     alignItems: 'center',
-  },
-  omContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    opacity: 0.05,
-  },
-  omSymbol: {
-    fontSize: 100,
-    color: colors.gray[400],
   },
   fullScreenModal: {
     flex: 1,

@@ -68,10 +68,6 @@ const AboutScreen = () => {
           </View>
         </ScrollView>
 
-        {/* Floating Om Symbol */}
-        <View style={styles.omContainer} pointerEvents="none">
-          <Text style={styles.omSymbol}>ॐ</Text>
-        </View>
       </View>
     </View>
   );
@@ -182,16 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.gray[400],
     fontStyle: 'italic',
-  },
-  omContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    opacity: 0.05,
-  },
-  omSymbol: {
-    fontSize: 120,
-    color: colors.gray[400],
   },
 });
 

@@ -60,6 +60,7 @@ const History = () => {
         }
     };
 
+
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-8 relative">
             <div className="max-w-4xl mx-auto">
@@ -125,12 +126,7 @@ const History = () => {
                 )}
             </div>
 
-            {/* Floating Om Symbol */}
-            <div className="fixed bottom-8 right-8 opacity-5 pointer-events-none">
-                <div className="text-9xl text-gray-400">
-                    ॐ
-                </div>
-            </div>
+
         </div>
     );
 };
