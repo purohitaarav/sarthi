@@ -163,10 +163,13 @@ async function performHybridSearch(query, maxResults) {
     return { verse, score: semantic * 2 + lexical };
   }).filter(Boolean);
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxResults)
-    .map(r => r.verse);
+  return {
+    verses: scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, maxResults)
+      .map(r => r.verse),
+    embedding
+  };
 }
 
 /* ===========================
@@ -185,7 +188,7 @@ router.post('/ask', async (req, res) => {
     console.log(`[${requestId}] [STEP 1] Starting request - Query: "${query.substring(0, 50)}..."`);
 
     console.log(`[${requestId}] [STEP 2] Retrieving verses via hybrid search...`);
-    const verses = await performHybridSearch(query, maxVerses);
+    const { verses, embedding } = await performHybridSearch(query, maxVerses);
     console.log(`[${requestId}] [STEP 2 DONE] Found ${verses.length} verses (${Date.now() - startedAt}ms elapsed)`);
 
     if (!verses.length) {
