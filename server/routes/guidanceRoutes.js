@@ -222,6 +222,7 @@ ${v.commentary || ''}
       success: true,
       latency_ms: Date.now() - startedAt,
       guidance,
+      query_embedding: embedding || null,
       verses_referenced: verses.map(v => ({
         reference: `${v.chapter}.${v.verse_number}`,
         translation: v.translation,
@@ -236,6 +237,21 @@ ${v.commentary || ''}
       error: 'Internal error',
       latency_ms: Date.now() - startedAt
     });
+  }
+});
+
+// Real-time Semantic Vector embedding generator route using text-embedding-004
+router.post('/embeddings/generate', async (req, res) => {
+  try {
+    const { text } = req.body || {};
+    if (!text) return res.status(400).json({ error: 'Text required' });
+
+    console.log(`[Embedding Engine] Generating embedding for: "${text.substring(0, 50)}..."`);
+    const embedding = await geminiService.generateEmbedding(text);
+    return res.json({ success: true, embedding });
+  } catch (err) {
+    console.error('❌ /embeddings/generate failed:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
