@@ -5,7 +5,7 @@ class GeminiService {
     this.apiKey = process.env.GEMINI_API_KEY;
     // Standard model names for Gemini
     this.modelName = 'gemini-3-flash-preview';
-    this.embeddingModelName = 'text-embedding-004';
+    this.embeddingModelName = 'gemini-embedding-2';
     this.genAI = null;
 
     if (this.apiKey) {
@@ -46,8 +46,8 @@ class GeminiService {
         console.log(`[Gemini] ✅ DONE: Embedding generated in ${Date.now() - start}ms`);
         return result.embedding.values;
       } catch (err) {
-        console.warn(`[Gemini] Primary embedding model ${this.embeddingModelName} failed (${err.message}). Retrying with embedding-001...`);
-        const model = this.genAI.getGenerativeModel({ model: 'embedding-001' });
+        console.warn(`[Gemini] Primary embedding model ${this.embeddingModelName} failed (${err.message}). Retrying with gemini-embedding-001...`);
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
         const result = await this._withTimeout(
           model.embedContent(prompt),
           30000,
