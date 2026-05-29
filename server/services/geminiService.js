@@ -39,7 +39,10 @@ class GeminiService {
       try {
         const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
         const result = await this._withTimeout(
-          model.embedContent(prompt),
+          model.embedContent({
+            content: { parts: [{ text: prompt }] },
+            outputDimensionality: 768
+          }),
           30000,
           'Embedding'
         );
@@ -49,7 +52,10 @@ class GeminiService {
         console.warn(`[Gemini] Primary embedding model ${this.embeddingModelName} failed (${err.message}). Retrying with gemini-embedding-001...`);
         const model = this.genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
         const result = await this._withTimeout(
-          model.embedContent(prompt),
+          model.embedContent({
+            content: { parts: [{ text: prompt }] },
+            outputDimensionality: 768
+          }),
           30000,
           'Embedding'
         );
