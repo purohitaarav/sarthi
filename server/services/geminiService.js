@@ -36,14 +36,26 @@ class GeminiService {
     const start = Date.now();
     try {
       console.log(`[Gemini] 🔵 START: Generating embedding (timeout: 30s)`);
-      const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
-      const result = await this._withTimeout(
-        model.embedContent(prompt),
-        30000,
-        'Embedding'
-      );
-      console.log(`[Gemini] ✅ DONE: Embedding generated in ${Date.now() - start}ms`);
-      return result.embedding.values;
+      try {
+        const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
+        const result = await this._withTimeout(
+          model.embedContent(prompt),
+          30000,
+          'Embedding'
+        );
+        console.log(`[Gemini] ✅ DONE: Embedding generated in ${Date.now() - start}ms`);
+        return result.embedding.values;
+      } catch (err) {
+        console.warn(`[Gemini] Primary embedding model ${this.embeddingModelName} failed (${err.message}). Retrying with embedding-001...`);
+        const model = this.genAI.getGenerativeModel({ model: 'embedding-001' });
+        const result = await this._withTimeout(
+          model.embedContent(prompt),
+          30000,
+          'Embedding'
+        );
+        console.log(`[Gemini] ✅ DONE: Embedding generated using fallback model in ${Date.now() - start}ms`);
+        return result.embedding.values;
+      }
     } catch (error) {
       console.error(`[Gemini] ❌ ERROR: Embedding failed after ${Date.now() - start}ms:`, error.message);
       throw error;
