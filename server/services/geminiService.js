@@ -31,79 +31,34 @@ class GeminiService {
    * @param {string} prompt - Text to embed
    * @returns {Promise<Array<number>>} - Embedding vector
    */
+  async getBgePipeline() {
+    if (!this.bgePipeline) {
+      const { pipeline } = require('@xenova/transformers');
+      console.log('[BGE] 📦 Loading BGE-small-en-v1.5 model...');
+      this.bgePipeline = await pipeline('feature-extraction', 'Xenova/bge-small-en-v1.5');
+      console.log('[BGE] ✅ BGE model loaded successfully');
+    }
+    return this.bgePipeline;
+  }
+
+  /**
+   * Generate embeddings using local BGE model
+   * @param {string} prompt - Text to embed
+   * @returns {Promise<Array<number>>} - Embedding vector
+   */
   async generateEmbedding(prompt) {
-    if (!this.genAI) throw new Error('Gemini API Key missing');
     const start = Date.now();
     try {
-      console.log(`[Gemini] 🔵 START: Generating embedding (timeout: 30s)`);
-      try {
-        const model = this.genAI.getGenerativeModel({ model: this.embeddingModelName });
-        const result = await this._withTimeout(
-          model.embedContent({
-            content: { parts: [{ text: prompt }] },
-            outputDimensionality: 768
-          }),
-          30000,
-          'Embedding'
-        );
-        console.log(`[Gemini] ✅ DONE: Embedding generated in ${Date.now() - start}ms`);
-        return result.embedding.values;
-      } catch (err) {
-        console.warn(`[Gemini] Primary embedding model ${this.embeddingModelName} failed (${err.message}). Retrying with gemini-embedding-001...`);
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-        const result = await this._withTimeout(
-          model.embedContent({
-            content: { parts: [{ text: prompt }] },
-            outputDimensionality: 768
-          }),
-          30000,
-          'Embedding'
-        );
-        console.log(`[Gemini] ✅ DONE: Embedding generated using fallback model in ${Date.now() - start}ms`);
-        return result.embedding.values;
-      }
+      console.log(`[BGE] 🔵 START: Generating local BGE embedding`);
+      const pipe = await this.getBgePipeline();
+      const text = prompt.trim();
+      const output = await pipe(text, { pooling: 'mean', normalize: true });
+      const embedding = Array.from(output.data);
+      console.log(`[BGE] ✅ DONE: Embedding generated locally in ${Date.now() - start}ms (dims: ${embedding.length})`);
+      return embedding;
     } catch (error) {
-      console.warn(`[Gemini Fallback Engine] ⚠️ Cloud embedding failed (${error.message}). Generating high-fidelity deterministic semantic vector locally...`);
-      
-      // Parse, hash, and structure a high-fidelity 768-dimension local semantic vector
-      const text = prompt || '';
-      const words = text.toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .split(/\s+/)
-        .filter(w => w.length > 2);
-      
-      const vector = new Array(768).fill(0).map((_, i) => {
-        // Deterministic base wave
-        let val = Math.sin(i * 0.15) * 0.04 + Math.cos(i * 0.05) * 0.02;
-        
-        // Seed specific dimensions for words to simulate conceptual clusters
-        words.forEach((word) => {
-          let hash = 0;
-          for (let c = 0; c < word.length; c++) {
-            hash = (hash << 5) - hash + word.charCodeAt(c);
-            hash |= 0;
-          }
-          const dim = Math.abs(hash) % 768;
-          if (i === dim) {
-            val += 0.25; // Primary semantic coordinate
-          }
-          if (Math.abs(i - dim) <= 2) {
-            val += 0.12; // Neighboring conceptual coordinate
-          }
-        });
-        return val;
-      });
-
-      // Normalize to L2 unit vector (magnitude = 1.0) so Cosine Similarity equals Dot Product
-      let sumSq = 0;
-      for (let i = 0; i < 768; i++) {
-        sumSq += vector[i] * vector[i];
-      }
-      const mag = Math.sqrt(sumSq) || 1;
-      const normalizedVector = vector.map(v => v / mag);
-      
-      console.log(`[Gemini Fallback Engine] ✅ Local deterministic semantic vector generated successfully in ${Date.now() - start}ms`);
-      return normalizedVector;
+      console.error('[BGE] ❌ Failed to generate BGE embedding:', error.message);
+      throw error;
     }
   }
 

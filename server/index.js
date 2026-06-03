@@ -29,8 +29,8 @@ const corsOptions = {
 
     // In production, check ALLOWED_ORIGINS
     if (process.env.NODE_ENV === 'production') {
-      // Explicitly allow Vercel frontend (handles any trailing slash differences)
-      if (origin && origin.startsWith('https://sarthi-murex.vercel.app')) {
+      // Allow any Vercel deployment domain (including previews and production aliases)
+      if (origin && (origin.endsWith('.vercel.app') || origin === 'https://sarthi-murex.vercel.app')) {
         return callback(null, true);
       }
 
