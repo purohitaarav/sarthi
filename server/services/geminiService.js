@@ -33,7 +33,9 @@ class GeminiService {
    */
   async getBgePipeline() {
     if (!this.bgePipeline) {
-      const { pipeline } = require('@xenova/transformers');
+      const { pipeline, env } = require('@xenova/transformers');
+      const path = require('path');
+      env.cacheDir = path.join(__dirname, '../.cache');
       console.log('[BGE] 📦 Loading BGE-small-en-v1.5 model...');
       this.bgePipeline = await pipeline('feature-extraction', 'Xenova/bge-small-en-v1.5');
       console.log('[BGE] ✅ BGE model loaded successfully');

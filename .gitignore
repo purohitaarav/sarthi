@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 client/node_modules/
+.cache/
+server/.cache/
 
 # Environment variables
 .env
